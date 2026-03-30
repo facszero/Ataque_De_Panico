@@ -323,91 +323,254 @@ function drawPalacioSalvo(x,y,lvl){
 // ══ AIRCRAFT DRAWINGS (CINEMATIC) ══════════════════════════
 function drawA29(x,y,scale=1){
   X.save();X.translate(x,y);X.scale(scale,scale);
-  // Engine exhaust
-  glow('#ff8800',20);
-  X.fillStyle='#ff5500';X.beginPath();X.ellipse(0,22,5,10,0,0,Math.PI*2);X.fill();
-  X.fillStyle='rgba(255,120,0,.4)';X.beginPath();X.ellipse(0,30,3,8,0,0,Math.PI*2);X.fill();
+
+  // ── Propeller wash glow
+  glow('#ffaa44',16);
+  X.fillStyle='rgba(255,140,40,.5)';
+  X.beginPath();X.ellipse(0,26,4,7,0,0,Math.PI*2);X.fill();
   noGlow();
-  // Fuselage
-  const fg=X.createLinearGradient(-7,0,7,0);
-  fg.addColorStop(0,'#2a3e20');fg.addColorStop(.5,'#4a6a32');fg.addColorStop(1,'#2a3e20');
+
+  // ── Horizontal stabilisers (rear, narrow)
+  X.fillStyle='#2a4018';
+  X.beginPath();
+  X.moveTo(-3,18);X.lineTo(-14,22);X.lineTo(-12,26);X.lineTo(-2,22);X.closePath();X.fill();
+  X.beginPath();
+  X.moveTo(3,18);X.lineTo(14,22);X.lineTo(12,26);X.lineTo(2,22);X.closePath();X.fill();
+
+  // ── Main wings  — straight, slight taper toward tips
+  // Left wing
+  const wL=X.createLinearGradient(-6,2,-36,10);
+  wL.addColorStop(0,'#3d5e28');wL.addColorStop(.5,'#4e7830');wL.addColorStop(1,'#324e22');
+  X.fillStyle=wL;
+  X.beginPath();
+  X.moveTo(-6,-2);X.lineTo(-6,10);         // wing root front/rear
+  X.lineTo(-36,13);X.lineTo(-36,6);         // wingtip rear/front
+  X.closePath();X.fill();
+  // Right wing
+  const wR=X.createLinearGradient(6,2,36,10);
+  wR.addColorStop(0,'#3d5e28');wR.addColorStop(.5,'#4e7830');wR.addColorStop(1,'#324e22');
+  X.fillStyle=wR;
+  X.beginPath();
+  X.moveTo(6,-2);X.lineTo(6,10);
+  X.lineTo(36,13);X.lineTo(36,6);
+  X.closePath();X.fill();
+
+  // Wing panel lines
+  X.strokeStyle='rgba(0,0,0,.35)';X.lineWidth=.7;
+  X.beginPath();X.moveTo(-6,4);X.lineTo(-36,9);X.stroke();
+  X.beginPath();X.moveTo(6,4);X.lineTo(36,9);X.stroke();
+  // Wing leading edge highlight
+  X.strokeStyle='rgba(120,180,80,.35)';X.lineWidth=1;
+  X.beginPath();X.moveTo(-6,-2);X.lineTo(-36,6);X.stroke();
+  X.beginPath();X.moveTo(6,-2);X.lineTo(36,6);X.stroke();
+
+  // ── Hardpoints / weapons under wings
+  // Outboard: AIM-9 Sidewinder  (small white missile)
+  for(const sx of[-28,28]){
+    X.fillStyle='#c8c8b0';
+    X.beginPath();X.ellipse(sx,8,1.8,7,0,0,Math.PI*2);X.fill();
+    X.fillStyle='#ee3300';X.beginPath();X.arc(sx,2,2,0,Math.PI*2);X.fill();
+  }
+  // Inboard: rocket pod (cylindrical)
+  for(const sx of[-18,18]){
+    X.fillStyle='#4a4a2a';
+    X.beginPath();X.ellipse(sx,8,3,8,0,0,Math.PI*2);X.fill();
+    X.strokeStyle='rgba(255,200,0,.4)';X.lineWidth=.8;X.stroke();
+  }
+
+  // ── Fuselage — slender, tapers to nose
+  const fg=X.createLinearGradient(-7,-28,7,0);
+  fg.addColorStop(0,'#546e38');fg.addColorStop(.3,'#4a6430');fg.addColorStop(.7,'#3e5428');fg.addColorStop(1,'#2e4020');
   X.fillStyle=fg;
-  X.beginPath();X.moveTo(0,-30);X.bezierCurveTo(8,-15,9,5,7,22);X.lineTo(-7,22);X.bezierCurveTo(-9,5,-8,-15,0,-30);X.closePath();X.fill();
-  // Wing stripes
-  X.strokeStyle='#3a5828';X.lineWidth=1;X.beginPath();X.moveTo(-2,-10);X.lineTo(-2,18);X.stroke();X.beginPath();X.moveTo(2,-10);X.lineTo(2,18);X.stroke();
-  // Wings
-  const wg=X.createLinearGradient(0,8,0,22);
-  wg.addColorStop(0,'#3a5828');wg.addColorStop(1,'#253d18');
-  X.fillStyle=wg;
-  X.beginPath();X.moveTo(-7,4);X.lineTo(-34,16);X.lineTo(-30,24);X.lineTo(-5,14);X.closePath();X.fill();
-  X.beginPath();X.moveTo(7,4);X.lineTo(34,16);X.lineTo(30,24);X.lineTo(5,14);X.closePath();X.fill();
-  // Wing edge highlight
-  X.strokeStyle='rgba(100,160,60,.4)';X.lineWidth=1;
-  X.beginPath();X.moveTo(-7,4);X.lineTo(-34,16);X.stroke();
-  X.beginPath();X.moveTo(7,4);X.lineTo(34,16);X.stroke();
-  // Tail
-  X.fillStyle='#2e4a1c';
-  X.beginPath();X.moveTo(-6,16);X.lineTo(-16,26);X.lineTo(-11,26);X.lineTo(-2,18);X.closePath();X.fill();
-  X.beginPath();X.moveTo(6,16);X.lineTo(16,26);X.lineTo(11,26);X.lineTo(2,18);X.closePath();X.fill();
-  // Cockpit
-  const cg=X.createRadialGradient(-2,-14,0,0,-12,10);
-  cg.addColorStop(0,'rgba(160,220,255,.9)');cg.addColorStop(.5,'rgba(60,120,180,.7)');cg.addColorStop(1,'rgba(20,60,120,.5)');
-  X.fillStyle=cg;X.beginPath();X.ellipse(0,-12,5,9,0,0,Math.PI*2);X.fill();
-  // Cockpit glare
-  X.fillStyle='rgba(255,255,255,.35)';X.beginPath();X.ellipse(-1.5,-16,2,4,-.3,0,Math.PI*2);X.fill();
-  // Missiles under wings
-  X.fillStyle='#445533';X.fillRect(-29,13,5,10);X.fillRect(24,13,5,10);
-  glow('#ff4400',6);X.fillStyle='#ff4400';X.beginPath();X.arc(-27,13,3,0,Math.PI*2);X.fill();X.beginPath();X.arc(27,13,3,0,Math.PI*2);X.fill();
+  X.beginPath();
+  X.moveTo(0,-30);                              // nose tip
+  X.bezierCurveTo(4,-22,5,-8,5,2);             // right side
+  X.lineTo(5,20);X.lineTo(-5,20);              // tail section
+  X.bezierCurveTo(-5,-8,-4,-22,0,-30);         // left side
+  X.closePath();X.fill();
+
+  // Fuselage panel lines / camo patches
+  X.fillStyle='rgba(40,60,20,.4)';
+  X.beginPath();X.ellipse(1,-5,3,8,.15,0,Math.PI*2);X.fill();
+  X.beginPath();X.ellipse(-1,8,2,5,-.1,0,Math.PI*2);X.fill();
+  X.fillStyle='rgba(70,100,30,.3)';
+  X.beginPath();X.ellipse(-2,-18,2,4,.2,0,Math.PI*2);X.fill();
+
+  // Spine ridge
+  X.strokeStyle='rgba(0,0,0,.3)';X.lineWidth=1.2;
+  X.beginPath();X.moveTo(0,-28);X.lineTo(0,20);X.stroke();
+
+  // ── Engine cowling — bulge around nose (turboprop)
+  const cw=X.createRadialGradient(0,-16,0,0,-16,8);
+  cw.addColorStop(0,'#5a7840');cw.addColorStop(1,'#3a5228');
+  X.fillStyle=cw;
+  X.beginPath();X.ellipse(0,-17,6,8,0,0,Math.PI*2);X.fill();
+  // Air intake scoops
+  X.fillStyle='rgba(0,0,0,.5)';
+  X.beginPath();X.ellipse(-3,-14,1.5,3,-.3,0,Math.PI*2);X.fill();
+  X.beginPath();X.ellipse(3,-14,1.5,3,.3,0,Math.PI*2);X.fill();
+
+  // ── Propeller disc (spinning blur)
+  X.strokeStyle='rgba(180,180,160,.2)';X.lineWidth=2;
+  X.beginPath();X.arc(0,-28,5,0,Math.PI*2);X.stroke();
+  X.strokeStyle='rgba(180,180,160,.35)';X.lineWidth=1;
+  X.beginPath();X.moveTo(-5,-28);X.lineTo(5,-28);X.stroke();
+  X.beginPath();X.moveTo(0,-33);X.lineTo(0,-23);X.stroke();
+
+  // ── Tandem cockpit (two seats, front+rear)
+  // Rear canopy
+  X.fillStyle='rgba(40,100,160,.7)';
+  X.beginPath();X.ellipse(0,-4,3.5,5,0,0,Math.PI*2);X.fill();
+  // Front canopy
+  const cg=X.createRadialGradient(-.5,-10,0,0,-9,5);
+  cg.addColorStop(0,'rgba(180,230,255,.95)');cg.addColorStop(.5,'rgba(80,150,210,.8)');cg.addColorStop(1,'rgba(30,80,160,.6)');
+  X.fillStyle=cg;
+  X.beginPath();X.ellipse(0,-10,3.5,5,0,0,Math.PI*2);X.fill();
+  // Glare
+  X.fillStyle='rgba(255,255,255,.4)';
+  X.beginPath();X.ellipse(-1,-12,1.5,2.5,-.3,0,Math.PI*2);X.fill();
+  // Canopy rail
+  X.strokeStyle='rgba(80,100,60,.7)';X.lineWidth=.8;
+  X.beginPath();X.moveTo(-3.5,-5);X.lineTo(-3.5,-15);X.stroke();
+  X.beginPath();X.moveTo(3.5,-5);X.lineTo(3.5,-15);X.stroke();
+
+  // ── Exhaust pipe (single rear turboprop)
+  X.fillStyle='#1e1e14';
+  X.beginPath();X.ellipse(0,22,3,5,0,0,Math.PI*2);X.fill();
+  glow('#ff6600',10);
+  X.fillStyle='rgba(255,100,30,.7)';
+  X.beginPath();X.ellipse(0,23,1.5,3,0,0,Math.PI*2);X.fill();
   noGlow();
+
   X.restore();
 }
 
 function drawA37(x,y,scale=1){
   X.save();X.translate(x,y);X.scale(scale,scale);
-  // Twin engines exhaust
-  glow('#ff7700',18);
-  X.fillStyle='#ff5500';X.beginPath();X.ellipse(-10,18,5,8,0,0,Math.PI*2);X.fill();
-  X.beginPath();X.ellipse(10,18,5,8,0,0,Math.PI*2);X.fill();
-  X.fillStyle='rgba(255,150,0,.3)';
-  X.beginPath();X.ellipse(-10,26,3,6,0,0,Math.PI*2);X.fill();
-  X.beginPath();X.ellipse(10,26,3,6,0,0,Math.PI*2);X.fill();
+
+  // ── Twin jet exhausts
+  glow('#ff9900',18);
+  X.fillStyle='#ff6600';
+  X.beginPath();X.ellipse(-5,24,3.5,6,0,0,Math.PI*2);X.fill();
+  X.beginPath();X.ellipse(5,24,3.5,6,0,0,Math.PI*2);X.fill();
+  X.fillStyle='rgba(255,160,60,.35)';
+  X.beginPath();X.ellipse(-5,30,2,5,0,0,Math.PI*2);X.fill();
+  X.beginPath();X.ellipse(5,30,2,5,0,0,Math.PI*2);X.fill();
   noGlow();
-  // Fuselage - wider, military olive
-  const fg=X.createLinearGradient(-10,0,10,0);
-  fg.addColorStop(0,'#3a3a18');fg.addColorStop(.5,'#5a5a28');fg.addColorStop(1,'#3a3a18');
+
+  // ── Horizontal stabilisers (rear, wider than A-29)
+  X.fillStyle='#36360e';
+  X.beginPath();
+  X.moveTo(-6,17);X.lineTo(-20,21);X.lineTo(-19,26);X.lineTo(-5,21);X.closePath();X.fill();
+  X.beginPath();
+  X.moveTo(6,17);X.lineTo(20,21);X.lineTo(19,26);X.lineTo(5,21);X.closePath();X.fill();
+
+  // ── Straight wings with slight taper — signature Dragonfly look
+  const wL=X.createLinearGradient(-7,-2,-40,8);
+  wL.addColorStop(0,'#464620');wL.addColorStop(.5,'#5a5a28');wL.addColorStop(1,'#383818');
+  X.fillStyle=wL;
+  X.beginPath();
+  X.moveTo(-7,-4);X.lineTo(-7,12);
+  X.lineTo(-40,12);X.lineTo(-40,-2);
+  X.closePath();X.fill();
+  const wR=X.createLinearGradient(7,-2,40,8);
+  wR.addColorStop(0,'#464620');wR.addColorStop(.5,'#5a5a28');wR.addColorStop(1,'#383818');
+  X.fillStyle=wR;
+  X.beginPath();
+  X.moveTo(7,-4);X.lineTo(7,12);
+  X.lineTo(40,12);X.lineTo(40,-2);
+  X.closePath();X.fill();
+
+  // Wing ribs / panel lines
+  X.strokeStyle='rgba(0,0,0,.3)';X.lineWidth=.7;
+  for(const [sx,ex] of[[-7,-40],[7,40]]){
+    const sign=sx<0?-1:1;
+    X.beginPath();X.moveTo(sx,4);X.lineTo(ex,5);X.stroke();
+    X.beginPath();X.moveTo(sx+sign*10,-2);X.lineTo(sx+sign*10,12);X.stroke();
+    X.beginPath();X.moveTo(sx+sign*22,-2);X.lineTo(sx+sign*22,12);X.stroke();
+  }
+
+  // ── Tip tanks — very distinctive feature of A-37
+  for(const tx of[-40,40]){
+    const tg=X.createLinearGradient(tx-3,0,tx+3,0);
+    tg.addColorStop(0,'#2a2a10');tg.addColorStop(.5,'#484820');tg.addColorStop(1,'#2a2a10');
+    X.fillStyle=tg;
+    X.beginPath();X.ellipse(tx,5,4,10,0,0,Math.PI*2);X.fill();
+    X.strokeStyle='rgba(255,220,100,.3)';X.lineWidth=.8;X.stroke();
+  }
+
+  // ── 6 hardpoints under wings (3 per side)
+  // Outer: AGM-22 rockets (green tubes)
+  for(const sx of[-32,32]){
+    X.fillStyle='#3a4a1a';
+    X.beginPath();X.ellipse(sx,6,2.5,7,0,0,Math.PI*2);X.fill();
+    X.fillStyle='rgba(255,80,0,.6)';X.beginPath();X.arc(sx,0,2,0,Math.PI*2);X.fill();
+  }
+  // Mid: bomb (fat, dark)
+  for(const sx of[-22,22]){
+    X.fillStyle='#2a2a0c';
+    X.beginPath();X.ellipse(sx,6,3.5,8,0,0,Math.PI*2);X.fill();
+    X.fillStyle='rgba(255,200,0,.3)';X.beginPath();X.arc(sx,0,2.5,0,Math.PI*2);X.fill();
+  }
+  // Inner: napalm/fuel tank
+  for(const sx of[-13,13]){
+    X.fillStyle='#3a3014';
+    X.beginPath();X.ellipse(sx,7,2.5,9,0,0,Math.PI*2);X.fill();
+  }
+
+  // ── Fuselage — wide, boxy, side-by-side engines
+  const fg=X.createLinearGradient(-9,-24,9,0);
+  fg.addColorStop(0,'#5a5a26');fg.addColorStop(.3,'#4e4e20');fg.addColorStop(.7,'#42421c');fg.addColorStop(1,'#363614');
   X.fillStyle=fg;
-  X.beginPath();X.moveTo(0,-26);X.bezierCurveTo(10,-12,11,6,8,22);X.lineTo(-8,22);X.bezierCurveTo(-11,6,-10,-12,0,-26);X.closePath();X.fill();
-  // Panel lines
-  X.strokeStyle='rgba(0,0,0,.4)';X.lineWidth=.8;
-  X.beginPath();X.moveTo(0,-22);X.lineTo(0,18);X.stroke();
-  // Wide wings
-  const wg=X.createLinearGradient(0,6,0,22);
-  wg.addColorStop(0,'#484818');wg.addColorStop(1,'#2e2e0c');
-  X.fillStyle=wg;
-  X.beginPath();X.moveTo(-8,2);X.lineTo(-38,14);X.lineTo(-33,22);X.lineTo(-6,12);X.closePath();X.fill();
-  X.beginPath();X.moveTo(8,2);X.lineTo(38,14);X.lineTo(33,22);X.lineTo(6,12);X.closePath();X.fill();
-  // Wing edge
-  X.strokeStyle='rgba(140,130,60,.4)';X.lineWidth=1;
-  X.beginPath();X.moveTo(-8,2);X.lineTo(-38,14);X.stroke();
-  X.beginPath();X.moveTo(8,2);X.lineTo(38,14);X.stroke();
-  // Tail
-  X.fillStyle='#383814';
-  X.beginPath();X.moveTo(-7,16);X.lineTo(-18,26);X.lineTo(-13,26);X.lineTo(-3,18);X.closePath();X.fill();
-  X.beginPath();X.moveTo(7,16);X.lineTo(18,26);X.lineTo(13,26);X.lineTo(3,18);X.closePath();X.fill();
-  // Cockpit
-  const cg=X.createRadialGradient(-2,-10,0,0,-9,9);
-  cg.addColorStop(0,'rgba(160,220,255,.9)');cg.addColorStop(.5,'rgba(60,120,180,.7)');cg.addColorStop(1,'rgba(20,60,120,.5)');
-  X.fillStyle=cg;X.beginPath();X.ellipse(0,-9,6,8,0,0,Math.PI*2);X.fill();
-  X.fillStyle='rgba(255,255,255,.3)';X.beginPath();X.ellipse(-1.5,-12,2.5,4,-.3,0,Math.PI*2);X.fill();
-  // Rocket pods
-  X.fillStyle='#3a3a14';X.fillRect(-36,8,6,13);X.fillRect(30,8,6,13);
-  // Bombs
-  X.fillStyle='#2e2e10';
-  X.beginPath();X.ellipse(-24,18,6,4.5,0,0,Math.PI*2);X.fill();
-  X.beginPath();X.ellipse(24,18,6,4.5,0,0,Math.PI*2);X.fill();
-  X.fillStyle='#1a1a08';
-  X.beginPath();X.ellipse(-24,18,3,2,0,0,Math.PI*2);X.fill();
-  X.beginPath();X.ellipse(24,18,3,2,0,0,Math.PI*2);X.fill();
+  X.beginPath();
+  X.moveTo(0,-28);                              // nose
+  X.bezierCurveTo(7,-20,9,-8,9,4);
+  X.lineTo(8,22);X.lineTo(-8,22);
+  X.bezierCurveTo(-9,-8,-7,-20,0,-28);
+  X.closePath();X.fill();
+
+  // Camo patches
+  X.fillStyle='rgba(30,40,10,.4)';
+  X.beginPath();X.ellipse(-2,-8,4,6,.2,0,Math.PI*2);X.fill();
+  X.beginPath();X.ellipse(3,6,3,5,-.15,0,Math.PI*2);X.fill();
+  X.fillStyle='rgba(80,80,20,.3)';
+  X.beginPath();X.ellipse(1,-18,3,4,.1,0,Math.PI*2);X.fill();
+
+  // Centerline spine
+  X.strokeStyle='rgba(0,0,0,.35)';X.lineWidth=1.2;
+  X.beginPath();X.moveTo(0,-26);X.lineTo(0,22);X.stroke();
+
+  // ── Twin engine intakes (NACA scoops on fuselage sides)
+  X.fillStyle='rgba(0,0,0,.55)';
+  X.beginPath();X.ellipse(-5,-8,3,6,-.1,0,Math.PI*2);X.fill();
+  X.beginPath();X.ellipse(5,-8,3,6,.1,0,Math.PI*2);X.fill();
+  // Intake highlight
+  X.strokeStyle='rgba(150,150,80,.3)';X.lineWidth=.8;
+  X.beginPath();X.ellipse(-5,-8,3,6,-.1,0,Math.PI*2);X.stroke();
+  X.beginPath();X.ellipse(5,-8,3,6,.1,0,Math.PI*2);X.stroke();
+
+  // ── Single-seat cockpit (bubble canopy, more forward)
+  const cg=X.createRadialGradient(-.5,-16,0,0,-15,6);
+  cg.addColorStop(0,'rgba(180,230,255,.95)');cg.addColorStop(.5,'rgba(80,150,210,.8)');cg.addColorStop(1,'rgba(30,80,160,.55)');
+  X.fillStyle=cg;
+  X.beginPath();X.ellipse(0,-16,4.5,6,0,0,Math.PI*2);X.fill();
+  // Glare
+  X.fillStyle='rgba(255,255,255,.45)';
+  X.beginPath();X.ellipse(-1.5,-18,2,3,-.3,0,Math.PI*2);X.fill();
+  // Canopy frame
+  X.strokeStyle='rgba(60,80,30,.8)';X.lineWidth=.9;
+  X.beginPath();X.ellipse(0,-16,4.5,6,0,0,Math.PI*2);X.stroke();
+  X.beginPath();X.moveTo(0,-22);X.lineTo(0,-10);X.stroke();
+
+  // ── Nose cone (rounded, wider than A-29)
+  const nc=X.createRadialGradient(0,-26,0,0,-24,5);
+  nc.addColorStop(0,'#6a6a30');nc.addColorStop(1,'#3e3e18');
+  X.fillStyle=nc;
+  X.beginPath();X.ellipse(0,-26,4,5,0,0,Math.PI*2);X.fill();
+  // Pitot tube
+  X.strokeStyle='#8a8a60';X.lineWidth=1;
+  X.beginPath();X.moveTo(1,-28);X.lineTo(1,-34);X.stroke();
+
   X.restore();
 }
 
