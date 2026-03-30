@@ -48,6 +48,9 @@ let touchId=null,touchStartX=0,touchStartY=0,touchDX=0,touchDY=0,touchActive=fal
 let touch2Id=null,specialFired=false;
 addEventListener('keydown',e=>{K[e.code]=true;resumeAC();anyKey=true;});
 addEventListener('keyup',e=>{K[e.code]=false;});
+// Tap tracking for menus
+let lastTapT=0,tapX=0,tapY=0,tapFired=false;
+function getTapCanvas(cx,cy){const r=C.getBoundingClientRect(),sc=W/r.width;return{x:(cx-r.left)*sc,y:(cy-r.top)*sc};}
 C.addEventListener('touchstart',e=>{
   e.preventDefault();resumeAC();anyKey=true;
   const r=C.getBoundingClientRect(),sc=W/r.width;
@@ -56,6 +59,8 @@ C.addEventListener('touchstart',e=>{
       touchId=t.identifier;
       touchStartX=t.clientX;touchStartY=t.clientY;
       touchDX=0;touchDY=0;touchActive=true;
+      // record tap position in canvas coords
+      tapX=(t.clientX-r.left)*sc;tapY=(t.clientY-r.top)*sc;tapFired=false;
     } else if(touch2Id===null){
       touch2Id=t.identifier;twoFinger=true;specialFired=false;
     }
@@ -74,12 +79,29 @@ C.addEventListener('touchend',e=>{
   e.preventDefault();
   for(const t of e.changedTouches){
     if(t.identifier===touchId){
+      // Fire tap if finger didn't move much
+      if(!tapFired&&Math.hypot(touchDX,touchDY)<20){handleTap(tapX,tapY);}
       touchId=null;touchDX=0;touchDY=0;touchActive=false;
     }
     if(t.identifier===touch2Id){touch2Id=null;twoFinger=false;}
   }
 },{passive:false});
 C.addEventListener('click',()=>{resumeAC();anyKey=true;});
+function handleTap(tx,ty){
+  tapFired=true;
+  if(STATE==='title'){anyKey=true;return;}
+  if(STATE==='select'){
+    const newSel=tx<W/2?0:1;
+    if(newSel===selPlane){// already selected — start
+      initGame();
+    }else{
+      selPlane=newSel;sfx.select();
+    }
+    return;
+  }
+  if(STATE==='gameover'){initGame();return;}
+  if(STATE==='missioncomplete'){STATE='title';Object.keys(K).forEach(k=>K[k]=false);return;}
+}
 
 // ══ UTILS ══════════════════════════════════════════════════
 const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -1231,15 +1253,15 @@ function drawSelect(){
     // Confirm / ready
     if(sel){
       glow('#ffcc00',12);X.fillStyle='#ffe566';X.font=`bold 11px 'Share Tech Mono'`;X.textAlign='center';
-      X.fillText('[ESPACIO]  START MISSION',bx+bw/2,by+bh-14);noGlow();
+      X.fillText('★ TOCÁ PARA INICIAR ★',bx+bw/2,by+bh-14);noGlow();
     }else{
       X.fillStyle='rgba(120,90,30,.5)';X.font=`9px 'Share Tech Mono'`;X.textAlign='center';
-      X.fillText('◄ / ► PARA SELECCIONAR',bx+bw/2,by+bh-14);
+      X.fillText('TOCÁ PARA ELEGIR',bx+bw/2,by+bh-14);
     }
   });
   metalRect(0,H-36,W,36,'#0a0806','#1e1610','rgba(120,90,30,.4)');
   X.fillStyle='rgba(200,160,80,.5)';X.font=`9px 'Share Tech Mono'`;X.textAlign='center';
-  X.fillText('← → ELEGIR  ·  ESPACIO CONFIRMAR  ·  ESC VOLVER',W/2,H-14);
+  X.fillText('TOCÁ UN AVIÓN PARA ELEGIR  ·  TOCÁ DE NUEVO PARA INICIAR',W/2,H-14);
 }
 
 function drawTouchJoystick(){
@@ -1361,7 +1383,7 @@ function drawGameOver(){
   X.fillStyle='rgba(255,200,80,.8)';X.font=`13px 'Share Tech Mono'`;X.textAlign='center';
   X.fillText(`SCORE: ${fmt(score)}`,W/2,H*.62+24);
   X.fillStyle='rgba(200,160,80,.5)';X.font=`9px 'Share Tech Mono'`;
-  X.fillText('ESPACIO → REINTENTAR  ·  ESC → MENÚ',W/2,H*.82);
+  X.fillText('TOCÁ PARA REINTENTAR',W/2,H*.82);
 }
 
 // ══ GAME INIT & LOOP ══════════════════════════════════════
