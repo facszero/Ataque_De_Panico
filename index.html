@@ -130,13 +130,13 @@ function addScore(pts){
 function glow(c,b=12){X.shadowBlur=b;X.shadowColor=c;}
 function noGlow(){X.shadowBlur=0;}
 
-function metalRect(x,y,w,h,dark='#1a1410',light='#3a2e20',border='#7a6030'){
+function metalRect(x,y,w,h,dark='#dba886',light='#d9ac78',border='#dbac56'){
   const g=X.createLinearGradient(x,y,x,y+h);
   g.addColorStop(0,light);g.addColorStop(0.5,dark);g.addColorStop(1,light);
   X.fillStyle=g;X.fillRect(x,y,w,h);
   X.strokeStyle=border;X.lineWidth=1.5;X.strokeRect(x+.75,y+.75,w-1.5,h-1.5);
   // inner bevel
-  X.strokeStyle='rgba(255,200,80,.08)';X.lineWidth=1;X.strokeRect(x+2,y+2,w-4,h-4);
+  X.strokeStyle='rgba(255,200,80,.25)';X.lineWidth=1;X.strokeRect(x+2,y+2,w-4,h-4);
 }
 
 function goldText(t,x,y,sz=14,align='center'){
@@ -150,7 +150,7 @@ function militaryText(t,x,y,sz=12,color='#ccaa44',align='center'){
 }
 
 // Corner decoration
-function corners(x,y,w,h,sz=10,c='#7a6030'){
+function corners(x,y,w,h,sz=10,c='#dbac56'){
   X.strokeStyle=c;X.lineWidth=2;
   const cs=[[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]];
   cs.forEach(([cx,cy,dx,dy])=>{X.beginPath();X.moveTo(cx+dx*sz,cy);X.lineTo(cx,cy);X.lineTo(cx,cy+dy*sz);X.stroke();});
@@ -167,7 +167,7 @@ function drawRambla(scroll){
   const s=scroll;
   // Río de la Plata — right side, murky brown-blue water
   const wg=X.createLinearGradient(W*.55,0,W,0);
-  wg.addColorStop(0,'#1a6080');wg.addColorStop(.4,'#1a7060');wg.addColorStop(1,'#145850');
+  wg.addColorStop(0,'#2eace6');wg.addColorStop(.4,'#2ec9ac');wg.addColorStop(1,'#249e90');
   X.fillStyle=wg;X.fillRect(W*.55,0,W*.45,H);
   // Water ripples
   X.strokeStyle='rgba(60,140,120,.5)';X.lineWidth=1;
@@ -192,7 +192,7 @@ function drawRambla(scroll){
   }
 
   // Rambla road — light grey strip along coast
-  X.fillStyle='#585650';X.fillRect(W*.48,0,W*.09,H);
+  X.fillStyle='#9e9a90';X.fillRect(W*.48,0,W*.09,H);
   // Road markings
   X.fillStyle='rgba(255,255,150,.4)';
   for(let i=0;i<22;i++){
@@ -208,7 +208,7 @@ function drawRambla(scroll){
 
   // Beach/waterfront strip
   const bg2=X.createLinearGradient(W*.44,0,W*.56,0);
-  bg2.addColorStop(0,'#3a3020');bg2.addColorStop(.5,'#504838');bg2.addColorStop(1,'#585650');
+  bg2.addColorStop(0,'#d4af75');bg2.addColorStop(.5,'#908164');bg2.addColorStop(1,'#9e9a90');
   X.fillStyle=bg2;X.fillRect(W*.44,0,W*.04,H);
   // Beach textures (small dots)
   X.fillStyle='rgba(220,200,140,.3)';
@@ -224,7 +224,7 @@ function drawRambla(scroll){
 function drawCentro(scroll){
   const s=scroll;
   // Base asphalt color
-  X.fillStyle='#4a4840';X.fillRect(0,0,W,H);
+  X.fillStyle='#858173';X.fillRect(0,0,W,H);
   // Full city grid
   drawCityGrid(0,W,s,1);
   // Main avenue (18 de Julio) — wide diagonal
@@ -239,14 +239,14 @@ function drawCentro(scroll){
   drawPalacioTopDown(W*.38,psy);
   // Plaza Independencia — open square
   const plsy=((500+s*.15)%H+H)%H;
-  X.fillStyle='#405838';X.fillRect(W*.32,plsy,W*.12,55);
+  X.fillStyle='#739e64';X.fillRect(W*.32,plsy,W*.12,55);
   X.strokeStyle='rgba(80,120,50,.4)';X.lineWidth=1;X.strokeRect(W*.32,plsy,W*.12,55);
   // Fountain
   X.fillStyle='rgba(50,130,170,.8)';X.beginPath();X.arc(W*.38,plsy+27,8,0,Math.PI*2);X.fill();
   // Trees in plaza
   for(let i=0;i<6;i++){
     const tx=W*.325+i*(W*.019);
-    X.fillStyle='#3a6020';X.beginPath();X.arc(tx,plsy+8,4,0,Math.PI*2);X.fill();
+    X.fillStyle='#68ac39';X.beginPath();X.arc(tx,plsy+8,4,0,Math.PI*2);X.fill();
     X.beginPath();X.arc(tx,plsy+48,4,0,Math.PI*2);X.fill();
   }
   drawAerialFires(0,W,s,12,18);
@@ -257,7 +257,7 @@ function drawPuerto(scroll){
   const s=scroll;
   // Water — left 35%
   const wg=X.createLinearGradient(0,0,W*.38,0);
-  wg.addColorStop(0,'#0e4060');wg.addColorStop(1,'#145040');
+  wg.addColorStop(0,'#31e0ff');wg.addColorStop(1,'#249073');
   X.fillStyle=wg;X.fillRect(0,0,W*.38,H);
   // Murky water ripples
   X.strokeStyle='rgba(40,120,100,.5)';X.lineWidth=1;
@@ -271,7 +271,7 @@ function drawPuerto(scroll){
     drawShip(ph2(si,7)*W*.28+15,sy,si+3);
   }
   // Pier / dock structures
-  X.fillStyle='#6a5a3a';
+  X.fillStyle='#bea268';
   X.fillRect(W*.3,0,W*.06,H);
   // Dock crane shadows from above
   for(let i=0;i<5;i++){
@@ -298,7 +298,7 @@ function drawCityGrid(startX,widthX,scroll,lvl){
   const rows=Math.ceil(H/(blockH+streetW))+2;
 
   // Street base
-  const streetCol=['#4a4840','#484640','#46404a'][lvl];
+  const streetCol=['#858173','#817e73','#7e7385'][lvl];
   X.fillStyle=streetCol;X.fillRect(startX,0,widthX,H);
 
   // Street grid lines
@@ -344,7 +344,7 @@ function drawCityBlock(bx,by,bw,bh,col,row,lvl,scroll){
 
   if(blockType===3&&ph2(col,row)>.6){
     // Park / green space
-    X.fillStyle=lvl===2?'#2a5020':'#305a22';
+    X.fillStyle=lvl===2?'#4b9039':'#56a23d';
     X.fillRect(bx,by,bw,bh);
     // Trees (circles from above)
     const nt=3+Math.floor(ph2(col*2,row*2)*5);
@@ -356,8 +356,8 @@ function drawCityBlock(bx,by,bw,bh,col,row,lvl,scroll){
       X.fillStyle='rgba(0,0,0,.5)';X.beginPath();X.arc(tx+2,ty+2,tr,0,Math.PI*2);X.fill();
       // Tree canopy (dark green blob from above)
       const tg=X.createRadialGradient(tx-1,ty-1,0,tx,ty,tr);
-      tg.addColorStop(0,lvl===2?'#3a6020':'#223814');
-      tg.addColorStop(.6,lvl===2?'#2e5018':'#1a2c0a');
+      tg.addColorStop(0,lvl===2?'#68ac39':'#87de4f');
+      tg.addColorStop(.6,lvl===2?'#52902b':'#86e333');
       tg.addColorStop(1,'rgba(20,40,10,0)');
       X.fillStyle=tg;X.beginPath();X.arc(tx,ty,tr,0,Math.PI*2);X.fill();
     }
@@ -367,8 +367,8 @@ function drawCityBlock(bx,by,bw,bh,col,row,lvl,scroll){
   // Building block colors by level
   const roofCols=[
     ['#8a8460','#7e7a58','#7a7850','#928e6a'],  // lvl0 warm beige/tan
-    ['#72686a','#7a6c6c','#686060','#7e7478'],  // lvl1 darker urban
-    ['#586858','#506655','#546856','#5e6e5a'],  // lvl2 green-grey
+    ['#72686a','#7a6c6c','#bbacac','#7e7478'],  // lvl1 darker urban
+    ['#9ebb9e','#90b799','#97bb9a','#5e6e5a'],  // lvl2 green-grey
   ];
   const roofC=roofCols[lvl][Math.floor(ph2(col,row)*4)];
 
@@ -380,13 +380,13 @@ function drawCityBlock(bx,by,bw,bh,col,row,lvl,scroll){
     X.fillStyle=roofC;X.fillRect(bx,by,bw,bh);
     const cw=bw*.38,ch=bh*.35;
     const cx2=bx+(bw-cw)*.5,cy2=by+(bh-ch)*.5;
-    X.fillStyle=lvl===2?'#101610':'#141210';
+    X.fillStyle=lvl===2?'#93ca93':'#c3b09c';
     X.fillRect(cx2,cy2,cw,ch);
     // Roof edge highlight
     X.strokeStyle='rgba(255,230,150,.25)';X.lineWidth=1;X.strokeRect(bx+.5,by+.5,bw-1,bh-1);
   } else if(blockType===2){
     // Multiple smaller buildings
-    X.fillStyle='#3a3830';X.fillRect(bx,by,bw,bh); // base alley
+    X.fillStyle='#cbc4a8';X.fillRect(bx,by,bw,bh); // base alley
     const nb=2+Math.floor(ph2(seed,4)*3);
     for(let b=0;b<nb;b++){
       const sbx=bx+ph2(seed+b,5)*(bw*.6);
@@ -432,21 +432,21 @@ function adjustColor(hex,amt){
 // ── PALACIO SALVO TOP-DOWN ──
 function drawPalacioTopDown(x,y){
   // Octagonal tower footprint from above
-  X.fillStyle='#6a5080';
+  X.fillStyle='#be90e6';
   X.beginPath();
   for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/8;X.lineTo(x+Math.cos(a)*16,y+Math.sin(a)*16);}
   X.closePath();X.fill();
   // Wings
   X.fillRect(x-28,y-8,56,16);
-  X.fillStyle='#584070';
+  X.fillStyle='#9e73c9';
   X.fillRect(x-24,y-4,48,8);
   // Roof details
-  X.fillStyle='rgba(255,200,80,.08)';
+  X.fillStyle='rgba(255,200,80,.25)';
   for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/8;
     X.beginPath();X.arc(x+Math.cos(a)*10,y+Math.sin(a)*10,2,0,Math.PI*2);X.fill();}
   // Spire shadow from above (offset circle)
   X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+3,y+3,5,0,Math.PI*2);X.fill();
-  X.fillStyle='#7a5090';X.beginPath();X.arc(x,y,5,0,Math.PI*2);X.fill();
+  X.fillStyle='#db90ff';X.beginPath();X.arc(x,y,5,0,Math.PI*2);X.fill();
   // Fire/destruction
   X.fillStyle='rgba(255,60,0,.2)';X.fillRect(x-28,y-8,56,16);
 }
@@ -457,10 +457,10 @@ function drawShip(x,y,type){
   const configs=[
     {l:38,w:9,c:'#7a7050',wake:true},   // fishing boat
     {l:55,w:12,c:'#686a58',wake:true},  // cargo ship
-    {l:30,w:7,c:'#646050',wake:false},  // small boat
+    {l:30,w:7,c:'#b4ac90',wake:false},  // small boat
     {l:70,w:16,c:'#606470',wake:true},  // cargo freighter
     {l:45,w:11,c:'#686a58',wake:true},  // patrol boat
-    {l:62,w:14,c:'#606468',wake:true},  // destroyer
+    {l:62,w:14,c:'#acb4bb',wake:true},  // destroyer
   ];
   const cfg=configs[type%configs.length];
   // Wake trail
@@ -514,7 +514,7 @@ function drawDebris(scroll){
 
 function drawBG(){
   // Dark base
-  X.fillStyle='#282420';X.fillRect(0,0,W,H);
+  X.fillStyle='#c3b09c';X.fillRect(0,0,W,H);
   switch(level){
     case 0: drawRambla(bgY); break;
     case 1: drawCentro(bgY); break;
@@ -559,7 +559,7 @@ function drawHUD(){
     const hpG=X.createLinearGradient(28,0,158,0);
     if(hp>.5){hpG.addColorStop(0,'#22aa22');hpG.addColorStop(1,'#44cc44');}
     else if(hp>.25){hpG.addColorStop(0,'#aa8800');hpG.addColorStop(1,'#ddaa00');}
-    else{hpG.addColorStop(0,'#aa1100');hpG.addColorStop(1,'#ee2200');}
+    else{hpG.addColorStop(0,'#ff1e00');hpG.addColorStop(1,'#ff3d00');}
     X.fillStyle=hpG;X.fillRect(29,H-41,128*hp,10);
     if(hp<.3&&Math.sin(frame*.2)>.3){glow('#ff0000',8);X.fillStyle='rgba(255,0,0,.15)';X.fillRect(28,H-42,130,12);noGlow();}
   }
@@ -572,7 +572,7 @@ function drawHUD(){
     const full=player.special>=100;
     const spG=X.createLinearGradient(28,0,158,0);
     if(full){spG.addColorStop(0,'#cc8800');spG.addColorStop(1,'#ffdd00');}
-    else{spG.addColorStop(0,'#443300');spG.addColorStop(1,'#665500');}
+    else{spG.addColorStop(0,'#f3b600');spG.addColorStop(1,'#b79900');}
     X.fillStyle=spG;X.fillRect(29,H-25,128*(player.special/100),8);
     if(full){glow('#ffcc00',8);X.fillStyle='rgba(255,200,0,.12)';X.fillRect(28,H-26,130,10);noGlow();}
   }
@@ -875,12 +875,12 @@ class Boss{
     X.fillStyle='rgba(0,0,0,.75)';X.fillRect(38,46,W-76,16);
     const pct=this.hp/this.maxHp;
     const bpG=X.createLinearGradient(38,0,38+(W-76)*pct,0);
-    if(this.phase2){bpG.addColorStop(0,'#440000');bpG.addColorStop(.5,'#cc1100');bpG.addColorStop(1,'#ff4400');}
-    else{bpG.addColorStop(0,'#003322');bpG.addColorStop(.5,'#007744');bpG.addColorStop(1,'#00cc66');}
+    if(this.phase2){bpG.addColorStop(0,'#ff0000');bpG.addColorStop(.5,'#ff1e00');bpG.addColorStop(1,'#ff4400');}
+    else{bpG.addColorStop(0,'#00ffb4');bpG.addColorStop(.5,'#00d67a');bpG.addColorStop(1,'#00cc66');}
     X.fillStyle=bpG;X.fillRect(39,47,(W-78)*pct,14);
     // Phase indicator flash
     if(this.phase2&&Math.sin(frame*.2)>.4){
-      X.fillStyle='rgba(255,0,0,.08)';X.fillRect(39,47,(W-78)*pct,14);}
+      X.fillStyle='rgba(255,0,0,.25)';X.fillRect(39,47,(W-78)*pct,14);}
     X.strokeStyle=this.phase2?'#ff4400':'#00cc66';X.lineWidth=1.5;X.strokeRect(38,46,W-76,16);
     corners(38,46,W-76,16,8,this.phase2?'#ff4400':'#00cc66');
     goldText(BOSSES[this.lvl],W/2,59,9);
@@ -896,7 +896,7 @@ function ptcl(x,y,color,n=8){
     particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,color,life:rnd(20,48),maxLife:48,sz:rnd(1.5,4),dead:false});
   }
 }
-function bigExp(x,y){ptcl(x,y,'#ff6600',28);ptcl(x,y,'#ffcc00',18);ptcl(x,y,'#ff2200',14);ptcl(x,y,'#ffffff',8);shk(12);sfx.exp(true);}
+function bigExp(x,y){ptcl(x,y,'#ff6600',28);ptcl(x,y,'#ffcc00',18);ptcl(x,y,'#ff3d00',14);ptcl(x,y,'#ffffff',8);shk(12);sfx.exp(true);}
 function updPtcl(){
   particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.vx*=.96;p.life--;if(p.life<=0)p.dead=true;});
   particles=particles.filter(p=>!p.dead);
@@ -946,7 +946,7 @@ class PowerUp{
 function drawHPBar(x,y,w,hp,maxHp){
   X.fillStyle='rgba(0,0,0,.55)';X.fillRect(x,y,w,7);
   const p=hp/maxHp;
-  X.fillStyle=p>.5?'#22aa33':p>.25?'#aa8800':'#cc1100';
+  X.fillStyle=p>.5?'#22aa33':p>.25?'#aa8800':'#ff1e00';
   X.fillRect(x+1,y+1,(w-2)*p,5);
   X.strokeStyle='rgba(150,100,30,.5)';X.lineWidth=1;X.strokeRect(x,y,w,7);
 }
@@ -993,15 +993,15 @@ initTitleBg();
 function drawTitle(){
   titleT++;
   // Atmospheric background
-  X.fillStyle='#040609';X.fillRect(0,0,W,H);
+  X.fillStyle='#7dbcff';X.fillRect(0,0,W,H);
   // Cloud layers
   for(let i=0;i<6;i++){
     const cx=((i*140+titleT*.12)%W+W)%W;
-    X.fillStyle=`rgba(8,14,22,.7)`;X.beginPath();X.ellipse(cx,60+i*15,80+i*10,28,0,0,Math.PI*2);X.fill();
+    X.fillStyle=`rgba(30,60,90,.7)`;X.beginPath();X.ellipse(cx,60+i*15,80+i*10,28,0,0,Math.PI*2);X.fill();
     if(cx+90>W){X.beginPath();X.ellipse(cx-W,60+i*15,80+i*10,28,0,0,Math.PI*2);X.fill();}
   }
   // Silhouette of Montevideo
-  X.fillStyle='#060c12';
+  X.fillStyle='#63c6ff';
   X.beginPath();X.moveTo(0,H);
   // Buildings silhouette
   const bsp=[[0,.86],[.04,.78],[.09,.72],[.14,.80],[.19,.66],[.24,.74],[.29,.60],[.34,.58],[.355,.44],
@@ -1024,9 +1024,9 @@ function drawTitle(){
   X.globalAlpha=.15;drawTripod(W*.65,H*.55,6,6,titleT);X.globalAlpha=1;
 
   // Title box
-  X.fillStyle='rgba(0,0,0,.65)';X.fillRect(30,H*.18,W-60,88);
+  X.fillStyle='rgba(0,0,0,.55)';X.fillRect(30,H*.18,W-60,88);
   X.strokeStyle='rgba(120,90,30,.7)';X.lineWidth=1.5;X.strokeRect(30,H*.18,W-60,88);
-  corners(30,H*.18,W-60,88,12,'#7a6030');
+  corners(30,H*.18,W-60,88,12,'#dbac56');
   // Title text
   glow('#ff8800',18);X.fillStyle='#ffaa22';X.font=`bold 18px 'Share Tech Mono'`;X.textAlign='center';
   X.fillText('ATAQUE DE PÁNICO',W/2,H*.18+32);noGlow();
@@ -1050,10 +1050,10 @@ function drawTitle(){
 }
 
 function drawSelect(){
-  X.fillStyle='#060a0e';X.fillRect(0,0,W,H);
+  X.fillStyle='#74c2ff';X.fillRect(0,0,W,H);
   // Header
-  metalRect(0,0,W,52,'#0a0806','#1e1610','#7a6030');
-  corners(0,0,W,52,16,'#7a6030');
+  metalRect(0,0,W,52,'#d7ac81','#e3a779','#dbac56');
+  corners(0,0,W,52,16,'#dbac56');
   goldText('ATAQUE DE PÁNICO',W/2,34,16);
 
   const planes=[
@@ -1066,12 +1066,12 @@ function drawSelect(){
     const bx=12+i*(W/2-6),bw=W/2-18,by=60,bh=H-110;
     const sel=selPlane===i;
     // Background
-    X.fillStyle=sel?'rgba(255,180,60,.08)':'rgba(10,14,18,.6)';X.fillRect(bx,by,bw,bh);
+    X.fillStyle=sel?'rgba(255,180,60,.25)':'rgba(10,14,18,.6)';X.fillRect(bx,by,bw,bh);
     // Border
     X.strokeStyle=sel?'#aa7722':'rgba(60,50,20,.6)';X.lineWidth=sel?2:1;X.strokeRect(bx,by,bw,bh);
     if(sel){corners(bx,by,bw,bh,10,'#aa7722');glow('#ffaa00',20);}
     // Selection bar
-    metalRect(bx+2,by+2,bw-4,22,sel?'#2e1a00':'#0e0c08',sel?'#4a2e0a':'#1a1610',sel?'#aa7722':'rgba(80,60,20,.5)');
+    metalRect(bx+2,by+2,bw-4,22,sel?'#ffa100':'#cfb176',sel?'#ffa423':'#cfaf7f',sel?'#aa7722':'rgba(80,60,20,.5)');
     X.fillStyle=sel?'#ffcc44':'#886633';X.font=`bold 9px 'Share Tech Mono'`;X.textAlign='center';
     X.fillText(p.name,bx+bw/2,by+16);noGlow();
     // Sub
@@ -1085,12 +1085,12 @@ function drawSelect(){
       X.fillStyle='rgba(200,160,80,.45)';X.font=`8px 'Share Tech Mono'`;X.textAlign='left';X.fillText(nm,bx+8,sy+9);
       X.fillStyle='rgba(0,0,0,.5)';X.fillRect(bx+36,sy,bw-44,10);
       const bG=X.createLinearGradient(bx+36,0,bx+36+val/5*(bw-44),0);
-      bG.addColorStop(0,sel?'#664400':'#333310');bG.addColorStop(1,sel?'#ffaa00':'#666628');
+      bG.addColorStop(0,sel?'#b77a00':'#c3c33d');bG.addColorStop(1,sel?'#ffaa00':'#b7b748');
       X.fillStyle=bG;X.fillRect(bx+37,sy+1,(bw-46)*val/5,8);
       X.strokeStyle='rgba(120,90,30,.4)';X.lineWidth=1;X.strokeRect(bx+36,sy,bw-44,10);
     });
     // Special ability
-    metalRect(bx+6,by+244,bw-12,48,'#08100a','#101e12','rgba(0,180,80,.35)');
+    metalRect(bx+6,by+244,bw-12,48,'#6fde8b','#75dc84','rgba(0,180,80,.35)');
     X.fillStyle='rgba(100,220,140,.6)';X.font=`bold 7px 'Share Tech Mono'`;X.textAlign='center';X.fillText('SPECIAL ABILITY',bx+bw/2,by+258);
     X.fillStyle='rgba(255,255,255,.75)';X.font=`8px 'Share Tech Mono'`;
     p.sp.split('\n').forEach((l,li)=>X.fillText(l,bx+bw/2,by+272+li*14));
@@ -1103,7 +1103,7 @@ function drawSelect(){
       X.fillText('TOCÁ PARA ELEGIR',bx+bw/2,by+bh-14);
     }
   });
-  metalRect(0,H-36,W,36,'#0a0806','#1e1610','rgba(120,90,30,.4)');
+  metalRect(0,H-36,W,36,'#d7ac81','#e3a779','rgba(120,90,30,.4)');
   X.fillStyle='rgba(200,160,80,.5)';X.font=`9px 'Share Tech Mono'`;X.textAlign='center';
   X.fillText('TOCÁ UN AVIÓN PARA ELEGIR  ·  TOCÁ DE NUEVO PARA INICIAR',W/2,H-14);
 }
@@ -1136,7 +1136,7 @@ function drawWarning(){
   X.fillStyle=`rgba(80,0,0,${a*.55})`;X.fillRect(0,0,W,H);
   if(flash){
     glow('#ff0000',30);
-    metalRect(20,H*.38,W-40,74,'#220000','#440000','#cc0000');
+    metalRect(20,H*.38,W-40,74,'#ff0000','#ff0000','#ff0000');
     corners(20,H*.38,W-40,74,10,'#ff0000');
     X.fillStyle='#ff0000';X.font=`bold 38px 'Share Tech Mono'`;X.textAlign='center';
     X.fillText('WARNING!',W/2,H*.38+52);noGlow();
@@ -1151,7 +1151,7 @@ function drawLevelBanner(){
   const a=levelT<55?levelT/55:Math.max(0,(160-levelT)/55);
   X.save();X.globalAlpha=a;
   X.fillStyle='rgba(0,0,0,.55)';X.fillRect(0,H*.38,W,90);
-  metalRect(20,H*.41,W-40,60,'#0a0c08','#141e10','rgba(100,160,60,.5)');
+  metalRect(20,H*.41,W-40,60,'#a4c583','#8dd471','rgba(100,160,60,.5)');
   corners(20,H*.41,W-40,60,8,'rgba(100,160,60,.7)');
   goldText(`LEVEL ${level+1}`,W/2,H*.41+24,11);
   X.fillStyle='rgba(255,255,255,.9)';X.font=`bold 16px 'Share Tech Mono'`;X.textAlign='center';
@@ -1164,7 +1164,7 @@ function drawLevelClear(){
   X.fillStyle=`rgba(0,0,0,${a*.7})`;X.fillRect(0,0,W,H);
   if(levelClearT>45){
     glow('#00ff88',18);
-    metalRect(20,H*.35,W-40,80,'#021408','#042e14','#00cc55');
+    metalRect(20,H*.35,W-40,80,'#1bff6c','#17ff76','#00cc55');
     corners(20,H*.35,W-40,80,10,'#00ff88');
     X.fillStyle='#00ff88';X.font=`bold 18px 'Share Tech Mono'`;X.textAlign='center';
     X.fillText('ZONA LIBERADA',W/2,H*.35+38);noGlow();
@@ -1180,9 +1180,9 @@ const LEVELS=[
 ];
 
 function drawMissionComplete(){
-  X.fillStyle='rgba(0,0,0,.88)';X.fillRect(0,0,W,H);
+  X.fillStyle='rgba(0,0,0,.75)';X.fillRect(0,0,W,H);
   // Title plate
-  metalRect(10,40,W-20,46,'#0a1008','#162014','#00cc55');
+  metalRect(10,40,W-20,46,'#87d86c','#8fd082','#00cc55');
   corners(10,40,W-20,46,12,'#00ff88');
   const mg=X.createLinearGradient(10,40,W-10,86);
   mg.addColorStop(0,'#00aa44');mg.addColorStop(.5,'#00ff88');mg.addColorStop(1,'#00aa44');
@@ -1201,7 +1201,7 @@ function drawMissionComplete(){
     if(!r[1]){// Divider
       X.strokeStyle='rgba(120,90,30,.4)';X.lineWidth=1;X.beginPath();X.moveTo(20,H*.36+i*44+22);X.lineTo(W-20,H*.36+i*44+22);X.stroke();return;
     }
-    metalRect(20,H*.36+i*44-2,W-40,36,i===4?'#0a0c00':'#08100a',i===4?'#1e1e00':'#0e180a',i===4?'#aa9900':'rgba(80,100,40,.4)');
+    metalRect(20,H*.36+i*44-2,W-40,36,i===4?'#b3d700':'#6fde8b',i===4?'#cbcb00':'#81de5c',i===4?'#aa9900':'rgba(80,100,40,.4)');
     X.fillStyle='rgba(200,160,80,.6)';X.font=`${i===4?'bold ':''}${i===4?12:10}px 'Share Tech Mono'`;X.textAlign='left';
     X.fillText(r[0],32,H*.36+i*44+18);
     glow(r[2],i===4?10:5);X.fillStyle=r[2];X.font=`bold ${i===4?16:13}px 'Share Tech Mono'`;X.textAlign='right';
@@ -1210,20 +1210,20 @@ function drawMissionComplete(){
   // Hi-score
   if(score>=hiScore){glow('#ffff00',10);X.fillStyle='#ffff44';X.font=`bold 12px 'Share Tech Mono'`;X.textAlign='center';X.fillText('★ NEW HI-SCORE! ★',W/2,H*.84);noGlow();}
   // Continue
-  metalRect(20,H-70,W-40,44,'#0a0806','#1e1610','#7a6030');
-  corners(20,H-70,W-40,44,8,'#7a6030');
+  metalRect(20,H-70,W-40,44,'#d7ac81','#e3a779','#dbac56');
+  corners(20,H-70,W-40,44,8,'#dbac56');
   if(Math.sin(frame*.05)>0){
     X.fillStyle='rgba(255,200,80,.8)';X.font=`bold 11px 'Share Tech Mono'`;X.textAlign='center';
     X.fillText('PRESS START TO CONTINUE',W/2,H-42);}
 }
 
 function drawGameOver(){
-  X.fillStyle='rgba(0,0,0,.78)';X.fillRect(0,0,W,H);
-  metalRect(20,H*.3,W-40,100,'#150000','#2a0000','#880000');
-  corners(20,H*.3,W-40,100,10,'#ff2200');
-  glow('#ff0000',22);X.fillStyle='#ee1100';X.font=`bold 38px 'Share Tech Mono'`;X.textAlign='center';
+  X.fillStyle='rgba(0,0,0,.7)';X.fillRect(0,0,W,H);
+  metalRect(20,H*.3,W-40,100,'#ff0000','#ff0000','#ff0000');
+  corners(20,H*.3,W-40,100,10,'#ff3d00');
+  glow('#ff0000',22);X.fillStyle='#ff1e00';X.font=`bold 38px 'Share Tech Mono'`;X.textAlign='center';
   X.fillText('MISSION',W/2,H*.3+50);X.fillText('FAILED',W/2,H*.3+88);noGlow();
-  metalRect(60,H*.62,W-120,38,'#0a0c08','#141610','rgba(120,90,30,.5)');
+  metalRect(60,H*.62,W-120,38,'#a4c583','#adbf8b','rgba(120,90,30,.5)');
   X.fillStyle='rgba(255,200,80,.8)';X.font=`13px 'Share Tech Mono'`;X.textAlign='center';
   X.fillText(`SCORE: ${fmt(score)}`,W/2,H*.62+24);
   X.fillStyle='rgba(200,160,80,.5)';X.font=`9px 'Share Tech Mono'`;
