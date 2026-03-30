@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>Defensa Aérea: Montevideo 2099</title>
+<title>Ataque De Pánico</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Share+Tech+Mono&display=swap');
@@ -42,20 +42,43 @@ const sfx={
 function resumeAC(){if(AC.state==='suspended')AC.resume();}
 
 // ══ INPUT ══════════════════════════════════════════════════
-const K={};let anyKey=false,touchPos=null,twoFinger=false;
+const K={};let anyKey=false,twoFinger=false;
+// Touch joystick: relative drag
+let touchId=null,touchStartX=0,touchStartY=0,touchDX=0,touchDY=0,touchActive=false;
+let touch2Id=null,specialFired=false;
 addEventListener('keydown',e=>{K[e.code]=true;resumeAC();anyKey=true;});
 addEventListener('keyup',e=>{K[e.code]=false;});
-C.addEventListener('touchstart',e=>{e.preventDefault();resumeAC();anyKey=true;
+C.addEventListener('touchstart',e=>{
+  e.preventDefault();resumeAC();anyKey=true;
   const r=C.getBoundingClientRect(),sc=W/r.width;
-  if(e.touches.length>=2){twoFinger=true;return;}
-  touchPos={x:(e.touches[0].clientX-r.left)*sc,y:(e.touches[0].clientY-r.top)*sc};
+  for(const t of e.changedTouches){
+    if(touchId===null){
+      touchId=t.identifier;
+      touchStartX=t.clientX;touchStartY=t.clientY;
+      touchDX=0;touchDY=0;touchActive=true;
+    } else if(touch2Id===null){
+      touch2Id=t.identifier;twoFinger=true;specialFired=false;
+    }
+  }
 },{passive:false});
-C.addEventListener('touchmove',e=>{e.preventDefault();
-  const r=C.getBoundingClientRect(),sc=W/r.width;
-  if(e.touches.length>=2){twoFinger=true;}
-  touchPos={x:(e.touches[0].clientX-r.left)*sc,y:(e.touches[0].clientY-r.top)*sc};
+C.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  for(const t of e.changedTouches){
+    if(t.identifier===touchId){
+      touchDX=t.clientX-touchStartX;
+      touchDY=t.clientY-touchStartY;
+    }
+  }
 },{passive:false});
-C.addEventListener('touchend',e=>{e.preventDefault();if(e.touches.length===0){touchPos=null;twoFinger=false;}},{passive:false});
+C.addEventListener('touchend',e=>{
+  e.preventDefault();
+  for(const t of e.changedTouches){
+    if(t.identifier===touchId){
+      touchId=null;touchDX=0;touchDY=0;touchActive=false;
+    }
+    if(t.identifier===touch2Id){touch2Id=null;twoFinger=false;}
+  }
+},{passive:false});
 C.addEventListener('click',()=>{resumeAC();anyKey=true;});
 
 // ══ UTILS ══════════════════════════════════════════════════
@@ -729,15 +752,14 @@ class Player{
     if(K['ArrowRight']||K['KeyD'])dx=1;
     if(K['ArrowUp']||K['KeyW'])dy=-1;
     if(K['ArrowDown']||K['KeyS'])dy=1;
-    if(touchPos){const td=touchPos.x-this.x,tv=touchPos.y-this.y,tl=Math.hypot(td,tv);if(tl>12){dx=td/tl;dy=tv/tl;}}
+    if(touchActive){const tl=Math.hypot(touchDX,touchDY);if(tl>8){const sc2=Math.min(tl/40,1);dx=touchDX/tl*sc2;dy=touchDY/tl*sc2;}}
     const sp=this.spd*(dx&&dy?.707:1);
     this.x=clamp(this.x+dx*sp,22,W-22);this.y=clamp(this.y+dy*sp,44,H-52);
     this.trail.push({x:this.x,y:this.y+24});if(this.trail.length>12)this.trail.shift();
     // Shoot
     this.st--;if(this.st<=0){this.fire();this.st=this.sft;}
     // Special
-    if((K['Space']||K['KeyX']||twoFinger)&&this.special>=100&&this.spCool<=0){this.activateSpecial();}
-    twoFinger=false;
+    if((K["Space"]||K["KeyX"]||(twoFinger&&!specialFired))&&this.special>=100&&this.spCool<=0){this.activateSpecial();if(twoFinger)specialFired=true;}
     if(this.spCool>0)this.spCool--;
     if(this.special<100)this.special=Math.min(100,this.special+.14);
     if(this.inv>0)this.inv--;if(this.dmg>0)this.dmg--;if(this.shield>0)this.shield--;
@@ -1141,7 +1163,7 @@ function drawTitle(){
   corners(30,H*.18,W-60,88,12,'#7a6030');
   // Title text
   glow('#ff8800',18);X.fillStyle='#ffaa22';X.font=`bold 18px 'Share Tech Mono'`;X.textAlign='center';
-  X.fillText('DEFENSA AÉREA',W/2,H*.18+32);noGlow();
+  X.fillText('ATAQUE DE PÁNICO',W/2,H*.18+32);noGlow();
   glow('#ff4400',14);X.fillStyle='#ff5500';X.font=`bold 24px 'Share Tech Mono'`;
   X.fillText('MONTEVIDEO 2099',W/2,H*.18+64);noGlow();
   X.fillStyle='rgba(200,160,80,.6)';X.font=`10px 'Share Tech Mono'`;
@@ -1158,7 +1180,7 @@ function drawTitle(){
   // Footer
   X.fillStyle='rgba(120,90,30,.5)';X.font=`9px 'Share Tech Mono'`;X.textAlign='center';
   X.fillText('FAU — Fuerza Aérea Uruguaya  ·  HI-SCORE: '+fmt(hiScore),W/2,H-18);
-  X.fillText('WASD/Flechas mover  ·  ESPACIO habilidad especial',W/2,H-6);
+  X.fillText('WASD/Flechas mover  ·  ESPACIO/2 dedos especial',W/2,H-6);
 }
 
 function drawSelect(){
@@ -1166,7 +1188,7 @@ function drawSelect(){
   // Header
   metalRect(0,0,W,52,'#0a0806','#1e1610','#7a6030');
   corners(0,0,W,52,16,'#7a6030');
-  goldText('SELECT YOUR AIRCRAFT',W/2,34,16);
+  goldText('ATAQUE DE PÁNICO',W/2,34,16);
 
   const planes=[
     {name:'A-29 SUPER TUCANO',sub:'PRECISION STRIKE',clr:'#66aaff',fn:drawA29,
@@ -1220,6 +1242,27 @@ function drawSelect(){
   X.fillText('← → ELEGIR  ·  ESPACIO CONFIRMAR  ·  ESC VOLVER',W/2,H-14);
 }
 
+function drawTouchJoystick(){
+  if(!touchActive&&touch2Id===null)return;
+  // Joystick base
+  const jx=80,jy=H-110;
+  X.save();X.globalAlpha=0.25;
+  X.fillStyle="#ffffff";X.beginPath();X.arc(jx,jy,38,0,Math.PI*2);X.fill();
+  X.strokeStyle="#ffffff";X.lineWidth=2;X.beginPath();X.arc(jx,jy,38,0,Math.PI*2);X.stroke();
+  // Joystick knob
+  const kx=clamp(touchDX,-28,28),ky=clamp(touchDY,-28,28);
+  X.fillStyle="#ffcc44";X.beginPath();X.arc(jx+kx,jy+ky,18,0,Math.PI*2);X.fill();
+  X.globalAlpha=1;
+  // Special button hint
+  if(player&&player.special>=100){
+    X.globalAlpha=0.35;
+    glow("#ffcc00",14);X.fillStyle="#ffcc00";
+    X.beginPath();X.arc(W-70,H-110,32,0,Math.PI*2);X.fill();noGlow();
+    X.globalAlpha=0.9;X.fillStyle="#000";X.font="bold 9px monospace";
+    X.textAlign="center";X.fillText("2 DEDOS",W-70,H-107);X.fillText("ESPECIAL",W-70,H-96);
+  }
+  X.restore();
+}
 function drawWarning(){
   bossWarning--;
   const a=Math.min(1,bossWarning>90?(120-bossWarning)/30:bossWarning/30);
@@ -1376,7 +1419,7 @@ function loop(){
       enemies.forEach(e=>{if(!e.dead)e.draw();});
       if(boss&&!boss.dead)boss.draw();
       if(player&&!player.dead)player.draw();
-      drawHUD();drawLevelBanner();
+      drawHUD();drawTouchJoystick();drawLevelBanner();
       if(bossWarning>0)drawWarning();break;
     case 'gameover':
       drawBG();drawPtcl();drawBullets();drawHUD();drawGameOver();
