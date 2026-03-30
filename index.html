@@ -976,7 +976,7 @@ function loop(){
     drawBG();drawPtcl();drawHUD();
     waitNext++;X.fillStyle=`rgba(0,0,0,${Math.min(.7,waitNext/50)})`;X.fillRect(0,0,W,H);
     if(waitNext>40){metalRect(20,H*.38,W-40,78,'#021408','#042e14','#00cc55');corners(20,H*.38,W-40,78,10,'#00ff88');glow('#00ff88',14);X.fillStyle='#00ff88';X.font='bold 18px monospace';X.textAlign='center';X.fillText('ZONA LIBERADA',W/2,H*.38+38);noGlow();X.fillStyle='rgba(200,255,200,.7)';X.font='11px monospace';X.fillText(`AVANZANDO A NIVEL ${G.level+2}...`,W/2,H*.38+62);}
-    if(waitNext>180)nextLevel();
+    if(waitNext>180){nextLevel();G.state="playing";waitNext=0;}
   }
   else if(G.state==='over'){
     drawBG();drawPtcl();drawHUD();drawGameOver();
