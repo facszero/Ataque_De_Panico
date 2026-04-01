@@ -101,426 +101,217 @@ const ph2=(x,y)=>((Math.sin(x*127.1+y*311.7)*43758.5453)%1+1)%1;
 const fmt=(n,z=6)=>String(Math.floor(n)).padStart(z,'0');
 function glow(c,b=10){X.shadowBlur=b;X.shadowColor=c;}
 function noGlow(){X.shadowBlur=0;}
-// ─── D&D BATTLEMAP BACKGROUNDS ───────────────────────────
-// Paleta inspirada en las imágenes de referencia
-const C2={
-  street:  '#d0c098', road:    '#c8b888', alley:   '#b8a878',
-  stone0:  '#d4c4a0', stone1:  '#c8b890', stone2:  '#bca880',
-  roof0:   '#c87040', roof1:   '#b86030', roof2:   '#a85828', roof3:'#d48040',
-  wall:    '#b0a080', walld:   '#988868',
-  green:   '#6a9c48', treed:   '#4a7830', treeh:   '#8ab858',
-  water0:  '#4a9aaa', water1:  '#3a8898', water2:  '#5aaabc', waterD:'#2a6878',
-  foam:    '#a8d4dc', wave:    '#3a7888',
-  dock:    '#8a6030', dockd:   '#6a4820', dockl:   '#a07840',
-  ink:     '#2a1c0c', inkl:    '#3a2c1a', inks:    'rgba(42,28,12,.55)',
-  sand:    '#c8b880', rock:    '#9a8c70', rockd:   '#7a6c50',
-  ship:    '#8a6030', shipd:   '#6a4820', sail:    '#e8dfc0',
-  smoke:   'rgba(60,45,30,.15)', paper: 'rgba(200,170,100,.03)',
-};
-
 function darken(h,a){
   if(!h||h[0]!=='#')return h;
-  return '#'+[1,3,5].map(i=>Math.max(0,parseInt(h.slice(i,i+2),16)-a).toString(16).padStart(2,'0')).join('');
+  const r=Math.max(0,parseInt(h.slice(1,3),16)-a);
+  const g=Math.max(0,parseInt(h.slice(3,5),16)-a);
+  const b=Math.max(0,parseInt(h.slice(5,7),16)-a);
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+let shakeAmt=0;
+function shk(a){shakeAmt=Math.max(shakeAmt,a);}
+
+// ─── GAME STATE ───────────────────────────────────────────
+const G={state:'title',sel:0,level:0,score:0,hi:0,bombs:2,combo:0,comboT:0,bgY:0,lvlT:0,bossOn:false,bossWarn:0};
+let player=null,bullets=[],enemies=[],particles=[],pups=[],boss=null,spawnQ=[];
+
+function addScore(pts){
+  const m=G.combo>5?3:G.combo>2?2:1;
+  G.score+=pts*m;G.combo++;G.comboT=120;
+  if(G.score>G.hi)G.hi=G.score;
 }
 
-// ── Ruido papel / textura ink ──────────────────────────────
-function paperNoise(){
-  for(let i=0;i<1200;i++){
-    const px=Math.random()*W,py=Math.random()*H;
-    X.fillStyle=`rgba(${80+Math.random()*60},${60+Math.random()*40},${30+Math.random()*30},${.02+Math.random()*.035})`;
-    X.fillRect(px,py,1,1);
-  }
-  // Viñeta
-  const vg=X.createRadialGradient(W*.5,H*.5,H*.3,W*.5,H*.5,H*.78);
-  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(30,18,6,.4)');
-  X.fillStyle=vg;X.fillRect(0,0,W,H);
-}
-
-// ── Árboles estilo ink+watercolor ─────────────────────────
-function drawTree(x,y,r){
-  // Sombra
-  X.fillStyle='rgba(42,28,12,.28)';X.beginPath();X.ellipse(x+2,y+2,r*.9,r*.65,0,0,Math.PI*2);X.fill();
-  // Copa watercolor
-  const g=X.createRadialGradient(x-r*.25,y-r*.25,0,x,y,r);
-  g.addColorStop(0,C2.treeh);g.addColorStop(.6,C2.green);g.addColorStop(1,C2.treed);
-  X.fillStyle=g;X.beginPath();X.arc(x,y,r,0,Math.PI*2);X.fill();
-  // Contorno ink
-  X.strokeStyle=C2.ink;X.lineWidth=1.3;X.stroke();
-  // Textura hatching rápido
-  X.strokeStyle='rgba(42,28,12,.18)';X.lineWidth=.6;
-  for(let i=-1;i<=1;i++){X.beginPath();X.moveTo(x+i*r*.35,y-r*.6);X.lineTo(x+i*r*.35+r*.2,y+r*.5);X.stroke();}
-}
-
-function treeCluster(x,y,n,spread){
-  for(let i=0;i<n;i++){
-    const tx=x+ph2(x*.01+i,y*.01)*spread-spread*.5;
-    const ty=y+ph2(x*.01,y*.01+i)*spread-spread*.5;
-    drawTree(tx,ty,5+ph2(tx,ty)*4);
-  }
-}
-
-// ── Barcos veleros top-down ────────────────────────────────
-function drawSailingShip(x,y,scale=1,angle=0){
-  X.save();X.translate(x,y);X.rotate(angle);X.scale(scale,scale);
-  const l=52,w=13;
-  // Estela
-  X.fillStyle='rgba(168,212,220,.32)';
-  X.beginPath();X.moveTo(0,l*.5);X.lineTo(-w*.7,l*1.6);X.lineTo(w*.7,l*1.6);X.closePath();X.fill();
-  // Casco sombra
-  X.fillStyle='rgba(42,28,12,.25)';X.fillRect(-w*.5+2,-l*.5+2,w,l);
-  // Casco madera
-  const hg=X.createLinearGradient(-w*.5,0,w*.5,0);
-  hg.addColorStop(0,C2.dockd);hg.addColorStop(.4,C2.ship);hg.addColorStop(1,C2.dockd);
-  X.fillStyle=hg;
-  X.beginPath();X.moveTo(0,-l*.5);X.bezierCurveTo(w*.55,-l*.3,w*.55,l*.3,0,l*.48);X.bezierCurveTo(-w*.55,l*.3,-w*.55,-l*.3,0,-l*.5);X.closePath();X.fill();
-  X.strokeStyle=C2.ink;X.lineWidth=1.5;X.stroke();
-  // Tablones
-  X.strokeStyle='rgba(42,28,12,.2)';X.lineWidth=.7;
-  for(let i=-2;i<=2;i++){X.beginPath();X.moveTo(i*w*.18,-l*.4);X.lineTo(i*w*.18,l*.35);X.stroke();}
-  // Mástil principal
-  X.strokeStyle=C2.ink;X.lineWidth=1.8;X.beginPath();X.moveTo(0,-l*.32);X.lineTo(0,l*.15);X.stroke();
-  // Verga horizontal
-  X.beginPath();X.moveTo(-w*.9,-l*.18);X.lineTo(w*.9,-l*.18);X.stroke();
-  // Vela mayor
-  const sg=X.createLinearGradient(-w*.7,-l*.18,w*.7,l*.1);
-  sg.addColorStop(0,'rgba(232,223,192,.9)');sg.addColorStop(1,'rgba(210,200,165,.7)');
-  X.fillStyle=sg;
-  X.beginPath();X.moveTo(-w*.82,-l*.18);X.bezierCurveTo(-w*.6,l*.02,w*.6,l*.02,w*.82,-l*.18);X.closePath();X.fill();
-  X.strokeStyle=C2.ink;X.lineWidth=1;X.stroke();
-  // Vela trinquete (pequeña delantera)
-  X.fillStyle='rgba(232,223,192,.75)';
-  X.beginPath();X.moveTo(0,-l*.42);X.lineTo(w*.45,-l*.22);X.lineTo(0,-l*.22);X.closePath();X.fill();
-  X.strokeStyle=C2.ink;X.lineWidth=.8;X.stroke();
-  X.restore();
-}
-
-function drawSmallBoat(x,y,angle=0){
-  X.save();X.translate(x,y);X.rotate(angle);
-  const l=22,w=7;
-  X.fillStyle='rgba(42,28,12,.2)';X.fillRect(-w*.5+1,-l*.5+1,w,l);
-  X.fillStyle=C2.ship;
-  X.beginPath();X.moveTo(0,-l*.5);X.bezierCurveTo(w*.5,-l*.3,w*.5,l*.3,0,l*.48);X.bezierCurveTo(-w*.5,l*.3,-w*.5,-l*.3,0,-l*.5);X.closePath();X.fill();
-  X.strokeStyle=C2.ink;X.lineWidth=1.2;X.stroke();
-  X.strokeStyle=C2.ink;X.lineWidth=1;X.beginPath();X.moveTo(0,-l*.3);X.lineTo(0,l*.15);X.stroke();
-  X.restore();
-}
-
-// ── Agua estilo watercolor ─────────────────────────────────
-function drawWaterSection(x,y,w,h,scroll){
-  // Base watercolor
-  const wg=X.createLinearGradient(x,y,x+w,y+h);
-  wg.addColorStop(0,C2.water0);wg.addColorStop(.4,C2.water1);wg.addColorStop(.7,C2.water2);wg.addColorStop(1,C2.waterD);
-  X.fillStyle=wg;X.fillRect(x,y,w,h);
-  // Manchas watercolor
-  for(let i=0;i<12;i++){
-    const wx=x+ph2(i*7,1)*w,wy=y+ph2(i*7,2)*h,wr=30+ph2(i*7,3)*50;
-    X.fillStyle=`rgba(${i%2?74:50},${i%2?154:136},${i%2?170:152},.15)`;
-    X.beginPath();X.ellipse(wx,wy,wr,wr*.6,ph2(i,4)*Math.PI,0,Math.PI*2);X.fill();
-  }
-  // Líneas de ola ink
-  X.strokeStyle=C2.wave;X.lineWidth=1;
-  for(let i=0;i<40;i++){
-    const wy=y+((i*28+scroll*.55)%(h+30)+h+30)%(h+30)-15;
-    const wx=x+ph2(i,10)*w;const wl=18+ph2(i,11)*32;
-    X.beginPath();X.moveTo(wx,wy);X.bezierCurveTo(wx+wl*.3,wy-3,wx+wl*.7,wy-3,wx+wl,wy);X.stroke();
-  }
-  // Espuma cerca de costa
-  X.strokeStyle=C2.foam;X.lineWidth=1.5;
-  for(let i=0;i<8;i++){
-    const fy=y+((i*80+scroll*.3)%(h+40)+h+40)%(h+40)-20;
-    X.beginPath();X.moveTo(x+2,fy);X.bezierCurveTo(x+10,fy-4,x+18,fy-4,x+25,fy);X.stroke();
-  }
-  // Gaviotas
-  for(let i=0;i<6;i++){
-    const gx=x+ph2(i*13,1)*w,gy=y+((ph2(i*13,2)*h+scroll*.2)%(h+20)+h+20)%(h+20)-10;
-    X.strokeStyle='rgba(255,255,255,.7)';X.lineWidth=1;
-    X.beginPath();X.moveTo(gx-5,gy);X.quadraticCurveTo(gx-2,gy-4,gx,gy);X.quadraticCurveTo(gx+2,gy-4,gx+5,gy);X.stroke();
-  }
-}
-
-// ── Piedras / costa rocosa ─────────────────────────────────
-function drawRockyShore(x,y,len,vertical=true){
-  for(let i=0;i<len;i+=14){
-    const rx=vertical?x+ph2(i,1)*8-4:x+i;
-    const ry=vertical?y+i:y+ph2(i,1)*8-4;
-    const rs=8+ph2(i,2)*10;
-    X.fillStyle=ph2(i,3)>.5?C2.rock:C2.rockd;
-    X.beginPath();
-    X.moveTo(rx+rs*.5,ry);X.bezierCurveTo(rx+rs,ry,rx+rs,ry+rs*.6,rx+rs*.5,ry+rs*.8);
-    X.bezierCurveTo(rx,ry+rs*.8,rx,ry,rx+rs*.5,ry);X.closePath();X.fill();
-    X.strokeStyle=C2.ink;X.lineWidth=.9;X.stroke();
-    // Cross-hatch on rocks
-    X.strokeStyle='rgba(42,28,12,.15)';X.lineWidth=.5;
-    X.beginPath();X.moveTo(rx+2,ry+2);X.lineTo(rx+rs-2,ry+rs*.6);X.stroke();
-  }
-}
-
-// ── Muelle de madera ──────────────────────────────────────
-function drawPier(x,y,len,wide=22){
-  // Tablones
-  const pg=X.createLinearGradient(x,y,x+wide,y);
-  pg.addColorStop(0,C2.dockd);pg.addColorStop(.5,C2.dock);pg.addColorStop(1,C2.dockd);
-  X.fillStyle=pg;X.fillRect(x,y,wide,len);
-  // Líneas de tablón
-  X.strokeStyle='rgba(42,28,12,.22)';X.lineWidth=.8;
-  for(let i=0;i<len;i+=8){X.beginPath();X.moveTo(x,y+i);X.lineTo(x+wide,y+i);X.stroke();}
-  // Contorno
-  X.strokeStyle=C2.ink;X.lineWidth=1.5;X.strokeRect(x,y,wide,len);
-  // Pilones
-  X.fillStyle=C2.dockd;
-  for(let i=6;i<len-6;i+=20){X.beginPath();X.arc(x-3,y+i,4,0,Math.PI*2);X.fill();X.strokeStyle=C2.ink;X.lineWidth=1;X.stroke();X.beginPath();X.arc(x+wide+3,y+i,4,0,Math.PI*2);X.fill();X.stroke();}
-}
-
-// ── Edificio colonial top-down ────────────────────────────
-function dndBlock(bx,by,bw,bh,col,row,lvl){
-  const t=Math.floor(ph2(col*3,row*3)*5);
-  const roofC=[C2.roof0,C2.roof1,C2.roof2,C2.roof3][Math.floor(ph2(col,row)*4)];
-  const wallC=[C2.stone0,C2.stone1,C2.stone2][Math.floor(ph2(col+1,row+1)*3)];
-
-  if(t===4&&ph2(col+2,row+2)>.5){
-    // Plaza / espacio verde
-    X.fillStyle=C2.green;X.fillRect(bx,by,bw,bh);
-    X.strokeStyle=C2.ink;X.lineWidth=1.6;X.strokeRect(bx,by,bw,bh);
-    treeCluster(bx+bw*.5,by+bh*.5,2+Math.floor(ph2(col,row)*3),Math.min(bw,bh)*.6);
-    return;
-  }
-
-  // Muro (fachada lateral visible)
-  X.fillStyle=wallC;X.fillRect(bx,by,bw,bh);
-  // Tejado terracota
-  const margin=3;
-  X.fillStyle=roofC;X.fillRect(bx+margin,by+margin,bw-margin*2,bh-margin*2);
-  // Highlight tejado (esquina iluminada)
-  X.fillStyle='rgba(255,220,160,.18)';X.fillRect(bx+margin,by+margin,bw-margin*2,4);
-  X.fillRect(bx+margin,by+margin,4,bh-margin*2);
-  // Cross-hatch tejado (textura ink)
-  X.save();X.beginPath();X.rect(bx+margin,by+margin,bw-margin*2,bh-margin*2);X.clip();
-  X.strokeStyle='rgba(42,28,12,.1)';X.lineWidth=.5;
-  for(let i=0;i<Math.max(bw,bh)*2;i+=6){X.beginPath();X.moveTo(bx+margin+i,by+margin);X.lineTo(bx+margin,by+margin+i);X.stroke();}
-  X.restore();
-  // Detalle: claraboya / tragaluz en tejado
-  if(bw>24&&bh>22&&ph2(col*2,row*2)>.55){
-    X.fillStyle=darken(roofC,15);X.fillRect(bx+bw*.35,by+bh*.35,bw*.28,bh*.28);
-    X.strokeStyle=C2.ink;X.lineWidth=.8;X.strokeRect(bx+bw*.35,by+bh*.35,bw*.28,bh*.28);
-  }
-  // Contorno ink grueso
-  X.strokeStyle=C2.ink;X.lineWidth=1.8;X.strokeRect(bx,by,bw,bh);
-  // Sombra SE (efecto pseudo-3D)
-  X.strokeStyle=C2.inks;X.lineWidth=3;
-  X.beginPath();X.moveTo(bx+bw,by+3);X.lineTo(bx+bw,by+bh);X.lineTo(bx+3,by+bh);X.stroke();
-  // Daño / fuego
-  const dmg=Math.min(1,Math.max(0,(G.lvlT-350)/650));
-  if(dmg>.22&&ph2(col*2+1,row*2+1)>.58){X.fillStyle=`rgba(200,60,0,${dmg*.2})`;X.fillRect(bx+margin,by+margin,bw-margin*2,bh-margin*2);}
-}
-
-// ── Grid urbano colonial (calles irregulares) ──────────────
-function dndCityGrid(sx,wX,s,lvl){
-  const BW=54,BH=58,SW=12;
-  const cols=Math.ceil(wX/(BW+SW))+2,rows=Math.ceil(H/(BH+SW))+2;
-  // Base piedra de calle
-  X.fillStyle=C2.street;X.fillRect(sx,0,wX,H);
-  // Textura de adoquines (líneas suaves)
-  X.strokeStyle='rgba(42,28,12,.1)';X.lineWidth=.6;
-  for(let c=0;c<cols*2;c++){
-    const gx=sx+((c*(BW+SW)*.5+s*.06)%(wX+BW)+wX+BW)%(wX+BW);
-    X.beginPath();X.moveTo(gx,0);X.lineTo(gx,H);X.stroke();
-  }
-  for(let r=0;r<rows*2;r++){
-    const gy=((r*(BH+SW)*.5+s*.5)%(H+BH)+H+BH)%(H+BH)-BH;
-    X.beginPath();X.moveTo(sx,gy);X.lineTo(sx+wX,gy);X.stroke();
-  }
-  // Desgaste en calles (manchas oscuras aleatorias)
-  X.fillStyle='rgba(42,28,12,.06)';
-  for(let i=0;i<30;i++){
-    const wx=sx+ph2(i*7,1)*wX,wy=((ph2(i*7,2)*H+s*.3)%(H+40)+H+40)%(H+40)-20;
-    X.beginPath();X.ellipse(wx,wy,8+ph2(i,3)*15,4+ph2(i,4)*8,ph2(i,5)*Math.PI,0,Math.PI*2);X.fill();
-  }
-  // Manzanas
-  for(let c=0;c<cols;c++){
-    for(let r=0;r<rows;r++){
-      const bx=sx+((c*(BW+SW)+s*.05)%(wX+BW+SW)+wX+BW+SW)%(wX+BW+SW)-BW;
-      const by=((r*(BH+SW)+s)%(H+BH+SW)+H+BH+SW)%(H+BH+SW)-BH;
-      if(bx>sx+wX+5||bx+BW<sx-5)continue;
-      dndBlock(bx,by,BW,BH,c,r,lvl);
-    }
-  }
-  // Líneas de calle encima (ink, para que sean legibles)
-  X.strokeStyle='rgba(42,28,12,.15)';X.lineWidth=1;
-  for(let c=0;c<cols;c++){
-    const gx=sx+((c*(BW+SW)+s*.05)%(wX+BW+SW)+wX+BW+SW)%(wX+BW+SW);
-    X.beginPath();X.moveTo(gx,0);X.lineTo(gx,H);X.stroke();
-    X.beginPath();X.moveTo(gx-BW,0);X.lineTo(gx-BW,H);X.stroke();
-  }
-  for(let r=0;r<rows;r++){
-    const gy=((r*(BH+SW)+s)%(H+BH+SW)+H+BH+SW)%(H+BH+SW)-BH;
-    X.beginPath();X.moveTo(sx,gy);X.lineTo(sx+wX,gy);X.stroke();
-    X.beginPath();X.moveTo(sx,gy+BH);X.lineTo(sx+wX,gy+BH);X.stroke();
-  }
-}
-
-// ── Palacio Salvo (ícono de torre) ────────────────────────
-function dndPalacioSalvo(x,y){
-  // Bloque principal
-  X.fillStyle=C2.stone1;X.fillRect(x-24,y-10,48,20);
-  X.strokeStyle=C2.ink;X.lineWidth=2;X.strokeRect(x-24,y-10,48,20);
-  // Torre central
-  X.fillStyle=C2.stone0;
-  X.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4;X.lineTo(x+Math.cos(a)*14,y+Math.sin(a)*14);}
-  X.closePath();X.fill();X.strokeStyle=C2.ink;X.lineWidth=2;X.stroke();
-  // Cúpula / tejado de torre
-  X.fillStyle=C2.roof2;
-  X.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4;X.lineTo(x+Math.cos(a)*11,y+Math.sin(a)*11);}
-  X.closePath();X.fill();X.strokeStyle=C2.ink;X.lineWidth=1.5;X.stroke();
-  // Aguja
-  X.fillStyle=C2.ink;X.beginPath();X.moveTo(x,y-18);X.lineTo(x-4,y-6);X.lineTo(x+4,y-6);X.closePath();X.fill();
-  // Almenas
-  X.fillStyle=C2.stone1;
-  for(let i=-2;i<=2;i++){X.fillRect(x+i*9-3,y-16,6,5);X.strokeStyle=C2.ink;X.lineWidth=1;X.strokeRect(x+i*9-3,y-16,6,5);}
-  // Sombra
-  X.strokeStyle=C2.inks;X.lineWidth=3;
-  X.beginPath();X.moveTo(x+14,y-8);X.lineTo(x+14,y+10);X.lineTo(x-12,y+10);X.stroke();
-  // Aura de fuego si hay daño
-  if(G.lvlT>400){X.fillStyle='rgba(200,60,0,.18)';X.beginPath();X.arc(x,y,16,0,Math.PI*2);X.fill();}
-}
-
-// ── Plaza con monumento ────────────────────────────────────
-function dndPlaza(x,y,w,h){
-  // Piedra de plaza
-  X.fillStyle=C2.road;X.fillRect(x,y,w,h);
-  X.strokeStyle=C2.ink;X.lineWidth=2;X.strokeRect(x,y,w,h);
-  // Líneas de adoquín
-  X.strokeStyle='rgba(42,28,12,.12)';X.lineWidth=.6;
-  for(let i=0;i<w;i+=10){X.beginPath();X.moveTo(x+i,y);X.lineTo(x+i,y+h);X.stroke();}
-  for(let i=0;i<h;i+=10){X.beginPath();X.moveTo(x,y+i);X.lineTo(x+w,y+i);X.stroke();}
-  // Árboles en perímetro
-  const ntrees=Math.floor((w+h)/24);
-  for(let i=0;i<ntrees;i++){
-    const p=i/ntrees;const px=p<.25?x+p*4*w:p<.5?x+w:p<.75?x+(1-p)*4*w:x;
-    const py=p<.25?y:p<.5?y+( p-.25)*4*h:p<.75?y+h:y+(1-p)*4*h;
-    drawTree(px,py,5);
-  }
-  // Senderos
-  X.fillStyle='rgba(200,180,130,.4)';X.fillRect(x+w*.5-4,y,8,h);X.fillRect(x,y+h*.5-4,w,8);
-  // Monumento central
-  X.fillStyle=C2.stone2;X.fillRect(x+w*.5-7,y+h*.5-7,14,14);
-  X.strokeStyle=C2.ink;X.lineWidth=1.8;X.strokeRect(x+w*.5-7,y+h*.5-7,14,14);
-  X.fillStyle=C2.walld;X.beginPath();X.arc(x+w*.5,y+h*.5,4,0,Math.PI*2);X.fill();
-  X.strokeStyle=C2.ink;X.lineWidth=1.2;X.stroke();
-  // Obelisco (punto arriba)
-  X.fillStyle=C2.ink;X.beginPath();X.moveTo(x+w*.5,y+h*.5-10);X.lineTo(x+w*.5-2.5,y+h*.5-4);X.lineTo(x+w*.5+2.5,y+h*.5-4);X.closePath();X.fill();
-}
-
-// ── Llamas estilo ink ──────────────────────────────────────
-function dndFlame(x,y){
-  const fl=.65+Math.sin(frame*.22+x*.05)*.35;
-  X.fillStyle=`rgba(180,50,20,${.8*fl})`;
-  X.beginPath();X.moveTo(x,y-14*fl);X.bezierCurveTo(x+8,y-6,x+7,y+4,x,y+6);X.bezierCurveTo(x-7,y+4,x-8,y-6,x,y-14*fl);X.closePath();X.fill();
-  X.strokeStyle='rgba(100,20,5,.6)';X.lineWidth=1;X.stroke();
-  X.fillStyle=`rgba(230,140,20,${.7*fl})`;X.beginPath();X.ellipse(x,y,3,5*fl,0,0,Math.PI*2);X.fill();
-  // Humo
-  X.fillStyle=`rgba(60,45,30,${.4*fl})`;X.beginPath();X.arc(x,y-16*fl,5,0,Math.PI*2);X.fill();
-  X.beginPath();X.arc(x+3,y-22*fl,3.5,0,Math.PI*2);X.fill();
-}
-
-// ═══════════════════════════════════════════════════════════
-// NIVELES
-// ═══════════════════════════════════════════════════════════
+// ─── TOP-DOWN BACKGROUNDS ─────────────────────────────────
 function drawBG(){
   if(G.level===0)bgRambla();
   else if(G.level===1)bgCentro();
   else bgPuerto();
-  paperNoise();
+  bgSmoke();
 }
 
 function bgRambla(){
-  // Base ciudad
-  X.fillStyle=C2.street;X.fillRect(0,0,W,H);
-  dndCityGrid(0,W*.44,G.bgY,0);
-
-  // Rambla costera — piedra clara
-  X.fillStyle=C2.sand;X.fillRect(W*.44,0,W*.06,H);
-  X.strokeStyle=C2.ink;X.lineWidth=1.5;X.beginPath();X.moveTo(W*.44,0);X.lineTo(W*.44,H);X.stroke();
-  // Barandilla
-  X.strokeStyle=C2.ink;X.lineWidth=1;
-  for(let i=0;i<H;i+=18){X.beginPath();X.arc(W*.498,i,2,0,Math.PI*2);X.fill();}
-  X.beginPath();X.moveTo(W*.498,0);X.lineTo(W*.498,H);X.stroke();
-
-  // Costa rocosa
-  drawRockyShore(W*.5,0,H,true);
-  X.strokeStyle=C2.ink;X.lineWidth=2;X.beginPath();X.moveTo(W*.52,0);X.lineTo(W*.52,H);X.stroke();
-
-  // Agua
-  drawWaterSection(W*.52,0,W*.48,H,G.bgY);
-
-  // Barcos
-  const s1y=((G.bgY*.28+50)%(H+160)+H+160)%(H+160)-160;
-  const s2y=((G.bgY*.22+280)%(H+160)+H+160)%(H+160)-160;
-  const s3y=((G.bgY*.18+480)%(H+160)+H+160)%(H+160)-160;
-  drawSailingShip(W*.68,s1y,1,.1);
-  drawSailingShip(W*.82,s2y,.85,-.08);
-  drawSmallBoat(W*.61,s3y,.05);drawSmallBoat(W*.74,((s3y+200)%(H+200)+H+200)%(H+200)-200,.08);
-
-  // Fuegos
-  for(const[fx,fy,fs]of[[W*.08,150,1],[W*.25,320,1],[W*.38,180,1],[W*.15,520,1],[W*.30,680,1]])
-    {dndFlame(fx,((fy+G.bgY*.3)%(H+60)+H+60)%(H+60)-30);}
+  // Ground base
+  X.fillStyle='#6b6455';X.fillRect(0,0,W,H);
+  // City blocks
+  cityGrid(0,W*.44,G.bgY,0);
+  // Rambla road
+  X.fillStyle='#787060';X.fillRect(W*.44,0,W*.045,H);
+  X.fillStyle='rgba(255,240,160,.3)';
+  for(let i=0;i<20;i++){const y=((i*56+G.bgY)%H+H)%H;X.fillRect(W*.459,y,3,26);}
+  // Sidewalk
+  X.fillStyle='#a09484';X.fillRect(W*.485,0,W*.038,H);
+  // Water
+  X.fillStyle='#4a8090';X.fillRect(W*.523,0,W*.477,H);
+  for(let i=0;i<32;i++){
+    const wy=((i*30+G.bgY*.55)%H+H)%H;
+    X.fillStyle=`rgba(100,180,200,${.12+ph2(i,1)*.1})`;
+    X.fillRect(W*.53+ph2(i,2)*W*.42,wy,20+ph2(i,3)*38,2);
+  }
+  for(let i=0;i<10;i++){
+    const wy=((i*78+G.bgY*.3)%H+H)%H;
+    X.fillStyle='rgba(220,240,250,.22)';
+    X.beginPath();X.ellipse(W*.57+ph2(i,7)*W*.36,wy,16+ph2(i,8)*12,4,0,0,Math.PI*2);X.fill();
+  }
+  for(let i=0;i<4;i++){
+    const sy=((i*230+G.bgY*.3)%(H+140)+H+140)%(H+140)-140;
+    ship(W*.59+ph2(i,9)*W*.30,sy,i);
+  }
+  bgFires(0,W*.43,8,10);
 }
 
 function bgCentro(){
-  X.fillStyle=C2.street;X.fillRect(0,0,W,H);
-  dndCityGrid(0,W,G.bgY,1);
-
-  // Avenida 18 de Julio
-  X.fillStyle=C2.road;X.fillRect(W*.28,0,W*.10,H);
-  X.strokeStyle=C2.ink;X.lineWidth=1.2;
-  X.beginPath();X.moveTo(W*.28,0);X.lineTo(W*.28,H);X.stroke();
-  X.beginPath();X.moveTo(W*.38,0);X.lineTo(W*.38,H);X.stroke();
-  // Guías de pavimento
-  X.strokeStyle='rgba(42,28,12,.1)';X.lineWidth=.6;
-  for(let i=0;i<H;i+=14){X.beginPath();X.moveTo(W*.28,i);X.lineTo(W*.38,i);X.stroke();}
-
+  X.fillStyle='#585048';X.fillRect(0,0,W,H);
+  cityGrid(0,W,G.bgY,1);
+  // 18 de Julio avenue
+  X.fillStyle='#706860';X.fillRect(W*.28,0,W*.10,H);
+  X.fillStyle='rgba(255,240,150,.28)';
+  for(let i=0;i<18;i++){const y=((i*64+G.bgY)%H+H)%H;X.fillRect(W*.328,y,4,32);}
   // Plaza Independencia
-  const psy=((500+G.bgY*.14)%(H+120)+H+120)%(H+120)-120;
-  dndPlaza(W*.28,psy,W*.18,72);
-
+  const py=((500+G.bgY*.14)%(H+120)+H+120)%(H+120)-120;
+  X.fillStyle='#546844';X.fillRect(W*.30,py,W*.14,64);
+  X.strokeStyle='rgba(140,200,80,.5)';X.lineWidth=2;X.strokeRect(W*.30,py,W*.14,64);
+  X.fillStyle='rgba(80,160,210,.75)';X.beginPath();X.arc(W*.37,py+32,9,0,Math.PI*2);X.fill();
+  for(let i=0;i<6;i++){
+    const tx=W*.305+i*W*.022;
+    X.fillStyle='#3a6820';X.beginPath();X.arc(tx,py+9,4,0,Math.PI*2);X.fill();
+    X.beginPath();X.arc(tx,py+55,4,0,Math.PI*2);X.fill();
+  }
   // Palacio Salvo
-  const psY=((340+G.bgY*.14)%(H+100)+H+100)%(H+100)-100;
-  dndPalacioSalvo(W*.38,psY);
-
-  // Fuegos urbanos
-  for(const[fx,fy]of[[W*.08,120],[W*.55,250],[W*.18,440],[W*.70,380],[W*.40,600],[W*.85,150],[W*.12,680]])
-    dndFlame(fx,((fy+G.bgY*.3)%(H+60)+H+60)%(H+60)-30);
+  const psy=((340+G.bgY*.14)%(H+90)+H+90)%(H+90)-90;
+  palacioTop(W*.37,psy);
+  bgFires(0,W,14,22);
 }
 
 function bgPuerto(){
-  X.fillStyle=C2.street;X.fillRect(0,0,W,H);
+  X.fillStyle='#584e42';X.fillRect(0,0,W,H);
+  // Water
+  X.fillStyle='#306070';X.fillRect(0,0,W*.38,H);
+  for(let i=0;i<22;i++){
+    const wy=((i*34+G.bgY*.5)%H+H)%H;
+    X.fillStyle=`rgba(60,140,160,${.18+ph2(i,4)*.12})`;
+    X.fillRect(ph2(i,5)*W*.32,wy,20+ph2(i,6)*28,2);
+  }
+  for(let i=0;i<5;i++){
+    const sy=((i*185+G.bgY*.28)%(H+150)+H+150)%(H+150)-150;
+    ship(ph2(i,8)*W*.28+14,sy,i+2);
+  }
+  // Pier
+  X.fillStyle='#908060';X.fillRect(W*.34,0,W*.07,H);
+  for(let i=0;i<6;i++){
+    const cy=((i*155+G.bgY*.18)%H+H)%H;
+    X.fillStyle='rgba(30,22,12,.7)';X.fillRect(W*.352,cy,28,6);X.fillRect(W*.352+26,cy-22,6,26);
+  }
+  // City
+  cityGrid(W*.41,W*.59,G.bgY,2);
+  bgFires(W*.41,W*.57,16,32);
+}
 
-  // Agua puerto (izquierda)
-  drawWaterSection(0,0,W*.36,H,G.bgY);
+function cityGrid(sx,wX,s,lvl){
+  const BW=56,BH=60,SW=11;
+  const cols=Math.ceil(wX/(BW+SW))+2,rows=Math.ceil(H/(BH+SW))+2;
+  // Streets
+  const sc=['#787060','#706858','#686050'][lvl];
+  X.fillStyle=sc;X.fillRect(sx,0,wX,H);
+  X.strokeStyle='rgba(200,185,130,.2)';X.lineWidth=1;
+  for(let c=0;c<=cols;c++){
+    const gx=sx+((c*(BW+SW)+s*.04)%(wX+BW+SW)+wX+BW+SW)%(wX+BW+SW)-BW;
+    if(gx<sx-5||gx>sx+wX+5)continue;
+    X.beginPath();X.moveTo(gx,0);X.lineTo(gx,H);X.stroke();
+  }
+  for(let r=0;r<=rows;r++){
+    const gy=((r*(BH+SW)+s)%(H+BH+SW)+H+BH+SW)%(H+BH+SW)-BH;
+    X.beginPath();X.moveTo(sx,gy);X.lineTo(sx+wX,gy);X.stroke();
+  }
+  // Blocks
+  for(let c=0;c<cols;c++){
+    for(let r=0;r<rows;r++){
+      const bx=sx+((c*(BW+SW)+s*.04)%(wX+BW+SW)+wX+BW+SW)%(wX+BW+SW)-BW;
+      const by=((r*(BH+SW)+s)%(H+BH+SW)+H+BH+SW)%(H+BH+SW)-BH;
+      if(bx>sx+wX+5||bx+BW<sx-5)continue;
+      cityBlock(bx,by,BW,BH,c,r,lvl);
+    }
+  }
+}
 
-  // Costa rocosa
-  drawRockyShore(W*.34,0,H,true);
-  X.strokeStyle=C2.ink;X.lineWidth=2.5;X.beginPath();X.moveTo(W*.37,0);X.lineTo(W*.37,H);X.stroke();
+function cityBlock(bx,by,bw,bh,col,row,lvl){
+  const p=[
+    ['#c0ae80','#b09870','#caba8a','#a08860'],
+    ['#9888aa','#887898','#aa98bc','#786888'],
+    ['#889478','#788468','#8aa07a','#687060'],
+  ][lvl];
+  const roofC=p[Math.floor(ph2(col,row)*4)];
+  const t=Math.floor(ph2(col*3,row*3)*4);
 
-  // Muelles
-  const p1y=((G.bgY*.2+40)%(H+200)+H+200)%(H+200)-200;
-  const p2y=((G.bgY*.18+240)%(H+200)+H+200)%(H+200)-200;
-  const p3y=((G.bgY*.16+460)%(H+200)+H+200)%(H+200)-200;
-  drawPier(W*.34,p1y,160,24);
-  drawPier(W*.34,p2y,120,20);
-  drawPier(W*.34,p3y,180,26);
+  if(t===3&&ph2(col+1,row+1)>.55){
+    X.fillStyle=['#70a050','#809060','#608848'][lvl];
+    X.fillRect(bx,by,bw,bh);
+    for(let i=0;i<4+Math.floor(ph2(col,row)*3);i++){
+      const tx=bx+4+ph2(col+i,row)*( bw-8),ty=by+4+ph2(col,row+i)*(bh-8),tr=3+ph2(col+i,row+i)*4;
+      X.fillStyle='rgba(0,0,0,.25)';X.beginPath();X.arc(tx+1,ty+1,tr,0,Math.PI*2);X.fill();
+      X.fillStyle=['#3a6820','#486030','#2e5818'][lvl];
+      X.beginPath();X.arc(tx,ty,tr,0,Math.PI*2);X.fill();
+    }
+    return;
+  }
+  if(t===1){
+    X.fillStyle=roofC;X.fillRect(bx,by,bw,bh);
+    X.fillStyle=darken(roofC,30);X.fillRect(bx+bw*.22,by+bh*.22,bw*.56,bh*.56);
+  }else{
+    X.fillStyle=roofC;X.fillRect(bx,by,bw,bh);
+    if(ph2(col+2,row+3)>.5){X.fillStyle=darken(roofC,20);X.fillRect(bx+bw*.18,by+bh*.18,bw*.15,bh*.15);}
+  }
+  // Edges
+  X.fillStyle='rgba(255,240,180,.15)';X.fillRect(bx,by,bw,2);X.fillRect(bx,by,2,bh);
+  X.fillStyle='rgba(0,0,0,.35)';X.fillRect(bx+bw,by+3,5,bh);X.fillRect(bx+3,by+bh,bw,5);
+  // Fire damage
+  const dmg=Math.min(1,Math.max(0,(G.lvlT-300)/700));
+  if(dmg>.2&&ph2(col*2+1,row*2+1)>.6){X.fillStyle=`rgba(255,80,0,${dmg*.2})`;X.fillRect(bx,by,bw,bh);}
+}
 
-  // Barcos en puerto
-  drawSailingShip(W*.18,((p1y+90)%(H+200)+H+200)%(H+200)-200,1.1,-.05);
-  drawSailingShip(W*.08,((p2y+70)%(H+200)+H+200)%(H+200)-200,.9,.08);
-  drawSmallBoat(W*.25,((p3y+50)%(H+120)+H+120)%(H+120)-120,.1);
-  drawSmallBoat(W*.14,((p3y+180)%(H+120)+H+120)%(H+120)-120,-.06);
+function palacioTop(x,y){
+  X.fillStyle='#8870b8';
+  X.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4;X.lineTo(x+Math.cos(a)*15,y+Math.sin(a)*15);}
+  X.closePath();X.fill();
+  X.fillStyle='#7060a0';X.fillRect(x-27,y-8,54,16);
+  X.fillStyle='rgba(255,60,0,.22)';X.fillRect(x-27,y-8,54,16);
+  X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+2,y+2,5,0,Math.PI*2);X.fill();
+  X.fillStyle='#a090d0';X.beginPath();X.arc(x,y,5,0,Math.PI*2);X.fill();
+}
 
-  // Ciudad
-  dndCityGrid(W*.37,W*.63,G.bgY,2);
+function ship(x,y,type){
+  const c=['#b0a070','#909a78','#a09870','#888a90','#a0a070','#889090'][type%6];
+  const l=[36,54,28,68,44,60][type%6],w=[8,12,6,15,10,13][type%6];
+  X.save();X.translate(x,y);
+  X.fillStyle='rgba(180,220,230,.22)';
+  X.beginPath();X.moveTo(0,l*.5);X.lineTo(-w*.7,l*1.5);X.lineTo(w*.7,l*1.5);X.closePath();X.fill();
+  X.fillStyle='rgba(0,0,0,.2)';X.fillRect(-w*.5+2,-l*.5+2,w,l);
+  X.fillStyle=c;
+  X.beginPath();X.moveTo(0,-l*.5);X.bezierCurveTo(w*.5,-l*.3,w*.5,l*.3,0,l*.5);
+  X.bezierCurveTo(-w*.5,l*.3,-w*.5,-l*.3,0,-l*.5);X.closePath();X.fill();
+  X.fillStyle=darken(c,-15);X.fillRect(-w*.25,-l*.12,w*.5,l*.18);
+  X.restore();
+}
 
-  // Fuegos portuarios
-  for(const[fx,fy]of[[W*.42,100],[W*.65,230],[W*.80,400],[W*.50,550],[W*.72,680],[W*.45,350]])
-    dndFlame(fx,((fy+G.bgY*.3)%(H+60)+H+60)%(H+60)-30);
+function bgFires(sx,ex,count,seed){
+  const wX=ex-sx;
+  for(let i=0;i<count;i++){
+    const fx=sx+ph2(seed+i,1)*wX;
+    const fy=((ph2(seed+i,2)*H*1.8+G.bgY*.3)%H+H)%H;
+    const fr=7+ph2(seed+i,3)*16,fl=.6+Math.sin(frame*.2+i)*.4;
+    X.fillStyle=`rgba(22,16,10,${.5*fl})`;
+    X.beginPath();X.ellipse(fx,fy-fr*.9,fr*.55,fr*fl,0,0,Math.PI*2);X.fill();
+    const g=X.createRadialGradient(fx,fy,0,fx,fy,fr*fl);
+    g.addColorStop(0,'rgba(255,210,40,.9)');g.addColorStop(.4,'rgba(255,70,0,.55)');g.addColorStop(1,'rgba(200,20,0,0)');
+    X.fillStyle=g;X.beginPath();X.ellipse(fx,fy,fr*.5*fl,fr*.38*fl,0,0,Math.PI*2);X.fill();
+  }
+}
+
+function bgSmoke(){
+  for(let i=0;i<8;i++){
+    const dx=((i*63+G.bgY*.04)%W+W)%W,dy=((i*88+G.bgY*.07)%H+H)%H;
+    X.fillStyle=`rgba(18,14,10,${.06+ph2(i,5)*.05})`;
+    X.beginPath();X.ellipse(dx,dy,24+ph2(i,6)*14,9+ph2(i,7)*5,ph2(i,8)*1.4,0,Math.PI*2);X.fill();
+  }
 }
 
 // ─── AIRCRAFT ─────────────────────────────────────────────
