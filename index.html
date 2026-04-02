@@ -158,7 +158,8 @@ var BG_FALLBACK=['#d0c098','#c8b890','#b8a878'];
 var SPR={};
 var SPR_LOADED={};
 ['drone','drone_fast','tripod','artillery','artillery_sp',
- 'miniboss','boss_nodriza','boss_robot','boss_acorazado'].forEach(function(n){
+ 'miniboss','boss_nodriza','boss_robot','boss_acorazado',
+ 'player_tucano','player_dragonfly'].forEach(function(n){
   var im=new Image();
   im.onload=function(){SPR[n]=im;SPR_LOADED[n]=true;};
   im.onerror=function(){SPR_LOADED[n]=false;};
@@ -204,102 +205,45 @@ function drawBG(){
 
 // ─── AIRCRAFT ─────────────────────────────────────────────
 function drawA29(x,y,sc=1){
+  if(drawSprite('player_tucano',x,y,70*sc,70*sc)){
+    glow('#ff8800',12);
+    X.fillStyle='rgba(255,130,40,.5)';
+    X.beginPath();X.ellipse(x,y+28*sc,4*sc,8*sc,0,0,Math.PI*2);X.fill();
+    noGlow();return;
+  }
   X.save();X.translate(x,y);X.scale(sc,sc);
-  // Exhaust
   glow('#ff8800',18);X.fillStyle='rgba(255,130,40,.6)';X.beginPath();X.ellipse(0,24,4,7,0,0,Math.PI*2);X.fill();noGlow();
-  // Horizontal stabs
-  X.fillStyle='#3a5a1e';
-  X.beginPath();X.moveTo(-3,18);X.lineTo(-15,23);X.lineTo(-12,27);X.lineTo(-2,21);X.closePath();X.fill();
-  X.beginPath();X.moveTo(3,18);X.lineTo(15,23);X.lineTo(12,27);X.lineTo(2,21);X.closePath();X.fill();
-  // Wings
-  const wg=X.createLinearGradient(-6,2,-37,10);wg.addColorStop(0,'#4a7230');wg.addColorStop(1,'#304e1a');
-  X.fillStyle=wg;
-  X.beginPath();X.moveTo(-6,-2);X.lineTo(-6,10);X.lineTo(-37,13);X.lineTo(-37,6);X.closePath();X.fill();
-  X.fillStyle=X.createLinearGradient(6,2,37,10);
-  const wgR=X.createLinearGradient(6,2,37,10);wgR.addColorStop(0,'#4a7230');wgR.addColorStop(1,'#304e1a');
-  X.fillStyle=wgR;
-  X.beginPath();X.moveTo(6,-2);X.lineTo(6,10);X.lineTo(37,13);X.lineTo(37,6);X.closePath();X.fill();
-  X.strokeStyle='rgba(130,200,80,.3)';X.lineWidth=1;
-  X.beginPath();X.moveTo(-6,-2);X.lineTo(-37,6);X.stroke();
-  X.beginPath();X.moveTo(6,-2);X.lineTo(37,6);X.stroke();
-  // Hardpoints
-  for(const s of[-28,28]){X.fillStyle='#d0c8a8';X.beginPath();X.ellipse(s,7,1.8,7,0,0,Math.PI*2);X.fill();X.fillStyle='#ee3300';X.beginPath();X.arc(s,1,2,0,Math.PI*2);X.fill();}
-  for(const s of[-18,18]){X.fillStyle='#5a5838';X.beginPath();X.ellipse(s,7,3,8,0,0,Math.PI*2);X.fill();}
-  // Fuselage
   const fg=X.createLinearGradient(-7,-28,7,0);fg.addColorStop(0,'#5e7840');fg.addColorStop(.5,'#4e6632');fg.addColorStop(1,'#364822');
-  X.fillStyle=fg;
-  X.beginPath();X.moveTo(0,-30);X.bezierCurveTo(5,-22,6,-8,5,2);X.lineTo(5,21);X.lineTo(-5,21);X.bezierCurveTo(-6,-8,-5,-22,0,-30);X.closePath();X.fill();
-  X.strokeStyle='rgba(0,0,0,.25)';X.lineWidth=1.2;X.beginPath();X.moveTo(0,-28);X.lineTo(0,21);X.stroke();
-  // Camo
-  X.fillStyle='rgba(40,60,18,.4)';X.beginPath();X.ellipse(1,-6,3,8,.15,0,Math.PI*2);X.fill();
-  X.beginPath();X.ellipse(-1,8,2,5,-.1,0,Math.PI*2);X.fill();
-  // Engine cowl
-  X.fillStyle='#6a8848';X.beginPath();X.ellipse(0,-17,6,8,0,0,Math.PI*2);X.fill();
-  X.fillStyle='rgba(0,0,0,.5)';X.beginPath();X.ellipse(-3,-14,1.5,3,-.3,0,Math.PI*2);X.fill();
-  X.beginPath();X.ellipse(3,-14,1.5,3,.3,0,Math.PI*2);X.fill();
-  // Prop disc
-  X.strokeStyle='rgba(180,180,160,.3)';X.lineWidth=2;X.beginPath();X.arc(0,-29,5,0,Math.PI*2);X.stroke();
-  X.strokeStyle='rgba(180,180,160,.5)';X.lineWidth=1;
-  X.beginPath();X.moveTo(-5,-29);X.lineTo(5,-29);X.stroke();
-  X.beginPath();X.moveTo(0,-34);X.lineTo(0,-24);X.stroke();
-  // Cockpit
-  const cg=X.createRadialGradient(-.5,-10,0,0,-9,5);
-  cg.addColorStop(0,'rgba(180,230,255,.95)');cg.addColorStop(.5,'rgba(80,150,210,.8)');cg.addColorStop(1,'rgba(30,80,160,.6)');
+  X.fillStyle=fg;X.beginPath();X.moveTo(0,-30);X.bezierCurveTo(5,-22,6,-8,5,2);X.lineTo(5,21);X.lineTo(-5,21);X.bezierCurveTo(-6,-8,-5,-22,0,-30);X.closePath();X.fill();
+  const wg=X.createLinearGradient(-6,2,-37,10);wg.addColorStop(0,'#4a7230');wg.addColorStop(1,'#304e1a');
+  X.fillStyle=wg;X.beginPath();X.moveTo(-6,-2);X.lineTo(-6,10);X.lineTo(-37,13);X.lineTo(-37,6);X.closePath();X.fill();
+  const wgR=X.createLinearGradient(6,2,37,10);wgR.addColorStop(0,'#4a7230');wgR.addColorStop(1,'#304e1a');
+  X.fillStyle=wgR;X.beginPath();X.moveTo(6,-2);X.lineTo(6,10);X.lineTo(37,13);X.lineTo(37,6);X.closePath();X.fill();
+  const cg=X.createRadialGradient(-.5,-10,0,0,-9,5);cg.addColorStop(0,'rgba(180,230,255,.95)');cg.addColorStop(1,'rgba(30,80,160,.6)');
   X.fillStyle=cg;X.beginPath();X.ellipse(0,-10,3.5,5,0,0,Math.PI*2);X.fill();
-  X.fillStyle='rgba(255,255,255,.4)';X.beginPath();X.ellipse(-1,-12,1.5,2.5,-.3,0,Math.PI*2);X.fill();
-  X.fillStyle='#1e1e12';X.beginPath();X.ellipse(0,23,3,5,0,0,Math.PI*2);X.fill();
-  glow('#ff6600',8);X.fillStyle='rgba(255,100,30,.7)';X.beginPath();X.ellipse(0,24,1.5,3,0,0,Math.PI*2);X.fill();noGlow();
   X.restore();
 }
 
 function drawA37(x,y,sc=1){
+  if(drawSprite('player_dragonfly',x,y,80*sc,80*sc)){
+    glow('#ff9900',14);
+    X.fillStyle='rgba(255,100,30,.5)';
+    X.beginPath();X.ellipse(x-11*sc,y+30*sc,4*sc,7*sc,0,0,Math.PI*2);X.fill();
+    X.beginPath();X.ellipse(x+11*sc,y+30*sc,4*sc,7*sc,0,0,Math.PI*2);X.fill();
+    noGlow();return;
+  }
   X.save();X.translate(x,y);X.scale(sc,sc);
   glow('#ff9900',16);X.fillStyle='#ff6600';
   X.beginPath();X.ellipse(-5,25,3.5,6,0,0,Math.PI*2);X.fill();
-  X.beginPath();X.ellipse(5,25,3.5,6,0,0,Math.PI*2);X.fill();
-  X.fillStyle='rgba(255,150,60,.3)';
-  X.beginPath();X.ellipse(-5,31,2,5,0,0,Math.PI*2);X.fill();
-  X.beginPath();X.ellipse(5,31,2,5,0,0,Math.PI*2);X.fill();noGlow();
-  // Stabs
-  X.fillStyle='#484818';
-  X.beginPath();X.moveTo(-6,17);X.lineTo(-21,22);X.lineTo(-20,27);X.lineTo(-5,21);X.closePath();X.fill();
-  X.beginPath();X.moveTo(6,17);X.lineTo(21,22);X.lineTo(20,27);X.lineTo(5,21);X.closePath();X.fill();
-  // Wings (straight — signature A-37)
+  X.beginPath();X.ellipse(5,25,3.5,6,0,0,Math.PI*2);X.fill();noGlow();
+  const fg=X.createLinearGradient(-9,-24,9,0);fg.addColorStop(0,'#6a6a2a');fg.addColorStop(.5,'#585820');fg.addColorStop(1,'#484812');
+  X.fillStyle=fg;X.beginPath();X.moveTo(0,-28);X.bezierCurveTo(8,-20,9,-8,9,4);X.lineTo(8,23);X.lineTo(-8,23);X.bezierCurveTo(-9,-8,-8,-20,0,-28);X.closePath();X.fill();
   const wgL=X.createLinearGradient(-7,-4,-42,8);wgL.addColorStop(0,'#5a5a22');wgL.addColorStop(1,'#404010');
   X.fillStyle=wgL;X.beginPath();X.moveTo(-7,-4);X.lineTo(-7,12);X.lineTo(-42,12);X.lineTo(-42,-2);X.closePath();X.fill();
   const wgR=X.createLinearGradient(7,-4,42,8);wgR.addColorStop(0,'#5a5a22');wgR.addColorStop(1,'#404010');
   X.fillStyle=wgR;X.beginPath();X.moveTo(7,-4);X.lineTo(7,12);X.lineTo(42,12);X.lineTo(42,-2);X.closePath();X.fill();
-  X.strokeStyle='rgba(0,0,0,.28)';X.lineWidth=.7;
-  for(const[s,e]of[[-7,-42],[7,42]]){X.beginPath();X.moveTo(s,4);X.lineTo(e,4);X.stroke();}
-  // Tip tanks (very distinctive)
-  for(const tx of[-42,42]){
-    X.fillStyle='#484820';X.beginPath();X.ellipse(tx,5,4,10,0,0,Math.PI*2);X.fill();
-    X.strokeStyle='rgba(255,220,80,.25)';X.lineWidth=.8;X.stroke();
-  }
-  // 6 hardpoints
-  for(const s of[-32,32]){X.fillStyle='#485228';X.beginPath();X.ellipse(s,5,2.5,7,0,0,Math.PI*2);X.fill();X.fillStyle='rgba(255,80,0,.6)';X.beginPath();X.arc(s,-1,2,0,Math.PI*2);X.fill();}
-  for(const s of[-22,22]){X.fillStyle='#303010';X.beginPath();X.ellipse(s,5,3.5,8,0,0,Math.PI*2);X.fill();}
-  for(const s of[-13,13]){X.fillStyle='#3a3012';X.beginPath();X.ellipse(s,6,2.5,9,0,0,Math.PI*2);X.fill();}
-  // Fuselage
-  const fg=X.createLinearGradient(-9,-24,9,0);fg.addColorStop(0,'#6a6a2a');fg.addColorStop(.5,'#585820');fg.addColorStop(1,'#484812');
-  X.fillStyle=fg;
-  X.beginPath();X.moveTo(0,-28);X.bezierCurveTo(8,-20,9,-8,9,4);X.lineTo(8,23);X.lineTo(-8,23);X.bezierCurveTo(-9,-8,-8,-20,0,-28);X.closePath();X.fill();
-  X.strokeStyle='rgba(0,0,0,.3)';X.lineWidth=1.2;X.beginPath();X.moveTo(0,-26);X.lineTo(0,23);X.stroke();
-  // Camo
-  X.fillStyle='rgba(30,40,10,.38)';X.beginPath();X.ellipse(-2,-8,4,6,.2,0,Math.PI*2);X.fill();
-  X.beginPath();X.ellipse(3,6,3,5,-.15,0,Math.PI*2);X.fill();
-  // Intakes
-  X.fillStyle='rgba(0,0,0,.55)';X.beginPath();X.ellipse(-5,-8,3,6,-.1,0,Math.PI*2);X.fill();
-  X.beginPath();X.ellipse(5,-8,3,6,.1,0,Math.PI*2);X.fill();
-  // Cockpit
-  const cg=X.createRadialGradient(-.5,-16,0,0,-15,6);
-  cg.addColorStop(0,'rgba(180,230,255,.95)');cg.addColorStop(.5,'rgba(80,150,210,.8)');cg.addColorStop(1,'rgba(30,80,160,.55)');
+  const cg=X.createRadialGradient(-.5,-16,0,0,-15,6);cg.addColorStop(0,'rgba(180,230,255,.95)');cg.addColorStop(1,'rgba(30,80,160,.55)');
   X.fillStyle=cg;X.beginPath();X.ellipse(0,-16,4.5,6,0,0,Math.PI*2);X.fill();
-  X.fillStyle='rgba(255,255,255,.4)';X.beginPath();X.ellipse(-1.5,-18,2,3,-.3,0,Math.PI*2);X.fill();
-  X.strokeStyle='rgba(60,80,28,.8)';X.lineWidth=.9;X.beginPath();X.ellipse(0,-16,4.5,6,0,0,Math.PI*2);X.stroke();
-  // Nose
-  X.fillStyle='#6a6a28';X.beginPath();X.ellipse(0,-26,4,5,0,0,Math.PI*2);X.fill();
-  X.strokeStyle='#8a8868';X.lineWidth=1;X.beginPath();X.moveTo(1,-28);X.lineTo(1,-34);X.stroke();
   X.restore();
 }
 
