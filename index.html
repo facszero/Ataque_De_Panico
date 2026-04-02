@@ -20,7 +20,7 @@ canvas{display:block;touch-action:none}
 </head>
 <body>
 <img id="titlebg" src="title_bg.webp" alt=""
-  style="display:none;position:absolute;pointer-events:none">
+  style="position:fixed;left:-9999px;top:-9999px;pointer-events:none;width:1px;height:1px">
 <canvas id="c"></canvas>
 <script>
 // ─── CANVAS ───────────────────────────────────────────────
@@ -706,7 +706,8 @@ function processSpawns(){
 
 // ─── SCREENS ──────────────────────────────────────────────
 function drawTitle(){
-  // Animated WebP background — works as regular img tag, no security issues
+  titleT++;
+  // ── Background: animated WebP or fallback sky
   if(titleBgReady && TITLEBG.naturalWidth>0){
     var iw=TITLEBG.naturalWidth, ih=TITLEBG.naturalHeight;
     var scale=Math.max(W/iw, H/ih);
@@ -715,30 +716,22 @@ function drawTitle(){
   } else {
     X.fillStyle='#1a2840';X.fillRect(0,0,W,H);
     for(let i=0;i<80;i++){const sx=(i*93+frame*.04)%W,sy=(i*137)%H;const br=.3+ph(i*11)*.7;X.fillStyle=`rgba(255,255,255,${br*.7})`;X.fillRect(sx,sy,br>.8?2:1,1);}
+    // City silhouette only in fallback mode
+    X.fillStyle='#243650';
+    X.beginPath();X.moveTo(0,H);
+    [[0,.86],[.04,.78],[.09,.72],[.14,.80],[.19,.66],[.24,.74],[.29,.60],[.34,.58],
+     [.355,.44],[.37,.42],[.385,.44],[.41,.68],[.44,.62],[.50,.70],[.55,.58],[.60,.65],
+     [.65,.54],[.70,.62],[.75,.72],[.80,.64],[.85,.74],[.90,.68],[.95,.76],[1,.82],[1,1]]
+    .forEach(([px,py])=>X.lineTo(px*W,py*H));X.closePath();X.fill();
   }
-  // City silhouette
-  X.fillStyle='#243650';
-  X.beginPath();X.moveTo(0,H);
-  [[0,.86],[.04,.78],[.09,.72],[.14,.80],[.19,.66],[.24,.74],[.29,.60],[.34,.58],
-   [.355,.44],[.37,.42],[.385,.44],[.41,.68],[.44,.62],[.50,.70],[.55,.58],[.60,.65],
-   [.65,.54],[.70,.62],[.75,.72],[.80,.64],[.85,.74],[.90,.68],[.95,.76],[1,.82],[1,1]]
-  .forEach(([px,py])=>X.lineTo(px*W,py*H));X.closePath();X.fill();
-  // Fires on skyline
-  for(let i=0;i<5;i++){
-    const fx=W*.15+i*W*.17,fy=H*.62+Math.sin(i*.7)*H*.06;
-    const g=X.createRadialGradient(fx,fy,0,fx,fy,18);g.addColorStop(0,'rgba(255,180,30,.8)');g.addColorStop(.5,'rgba(255,60,0,.4)');g.addColorStop(1,'rgba(200,20,0,0)');
-    X.fillStyle=g;X.beginPath();X.ellipse(fx,fy,10,14+Math.sin(frame*.2+i)*4,0,0,Math.PI*2);X.fill();
-  }
-  // Plane
-  X.save();X.translate(W/2+Math.sin(frame*.015)*60,H*.42+Math.sin(frame*.04)*10);X.scale(.9,.9);drawA29(0,0);X.restore();
-  // Title box
-  X.fillStyle='rgba(0,0,0,.7)';X.fillRect(30,H*.18,W-60,90);
+  // ── Title box (always shown)
+  X.fillStyle='rgba(0,0,0,.65)';X.fillRect(30,H*.18,W-60,90);
   X.strokeStyle='rgba(180,130,40,.7)';X.lineWidth=1.5;X.strokeRect(30,H*.18,W-60,90);
   corners(30,H*.18,W-60,90,12,'#aa8830');
   glow('#ff8800',18);X.fillStyle='#ffaa22';X.font='bold 18px monospace';X.textAlign='center';X.fillText('ATAQUE DE PÁNICO',W/2,H*.18+36);noGlow();
   glow('#ff4400',14);X.fillStyle='#ff5500';X.font='bold 14px monospace';X.fillText('MONTEVIDEO 2099',W/2,H*.18+60);noGlow();
   X.fillStyle='rgba(200,160,80,.6)';X.font='9px monospace';X.fillText('Inspirado en el corto de Federico Alvarez',W/2,H*.18+80);
-  // Blink
+  // ── Blink prompt
   if(Math.sin(frame*.055)>0){glow('#ffcc00',8);X.fillStyle='#ffe566';X.font='bold 12px monospace';X.fillText('TOCÁ / PRESIONÁ CUALQUIER TECLA',W/2,H*.8);noGlow();}
   X.fillStyle='rgba(120,90,30,.5)';X.font='9px monospace';X.fillText(`FAU — Fuerza Aérea Uruguaya  ·  HI: ${fmt(G.hi)}`,W/2,H-10);
 }
