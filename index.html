@@ -163,12 +163,10 @@ function activateNuke(){
   G.nukeAvail=false;
   // Destroy all enemies
   enemies.forEach(e=>{
-    if(!e.dead){
-      bigExp(e.x,e.y);
-      addScore(Math.floor(e.sc*0.5));
-      e.dead=true;
-    }
+    if(!e.dead){bigExp(e.x,e.y);addScore(Math.floor(e.sc*0.5));e.dead=true;}
   });
+  // Disintegrate ALL enemy bullets
+  bullets.forEach(b=>{if(!b.friendly){ptcl(b.x,b.y,'#ffcc44',2);b.dead=true;}});
   // 30% damage to boss
   if(boss&&!boss.dead){
     const dmg=Math.floor(boss.mhp*0.30);
