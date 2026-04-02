@@ -205,11 +205,13 @@ function drawBG(){
 
 // ─── AIRCRAFT ─────────────────────────────────────────────
 function drawA29(x,y,sc=1){
+  // Engine exhaust glow BEHIND sprite
+  glow('#ff8800',10);
+  X.fillStyle='rgba(255,120,40,.55)';
+  X.beginPath();X.ellipse(x,y+30*sc,3.5*sc,6*sc,0,0,Math.PI*2);X.fill();
+  noGlow();
   if(drawSprite('player_tucano',x,y,70*sc,70*sc)){
-    glow('#ff8800',12);
-    X.fillStyle='rgba(255,130,40,.5)';
-    X.beginPath();X.ellipse(x,y+28*sc,4*sc,8*sc,0,0,Math.PI*2);X.fill();
-    noGlow();return;
+    return;
   }
   X.save();X.translate(x,y);X.scale(sc,sc);
   glow('#ff8800',18);X.fillStyle='rgba(255,130,40,.6)';X.beginPath();X.ellipse(0,24,4,7,0,0,Math.PI*2);X.fill();noGlow();
@@ -225,12 +227,14 @@ function drawA29(x,y,sc=1){
 }
 
 function drawA37(x,y,sc=1){
+  // Draw engine exhaust glow BEHIND the sprite
+  glow('#ff8800',10);
+  X.fillStyle='rgba(255,120,40,.6)';
+  X.beginPath();X.ellipse(x-10*sc,y+32*sc,3.5*sc,6*sc,0,0,Math.PI*2);X.fill();
+  X.beginPath();X.ellipse(x+10*sc,y+32*sc,3.5*sc,6*sc,0,0,Math.PI*2);X.fill();
+  noGlow();
   if(drawSprite('player_dragonfly',x,y,80*sc,80*sc)){
-    glow('#ff9900',14);
-    X.fillStyle='rgba(255,100,30,.5)';
-    X.beginPath();X.ellipse(x-11*sc,y+30*sc,4*sc,7*sc,0,0,Math.PI*2);X.fill();
-    X.beginPath();X.ellipse(x+11*sc,y+30*sc,4*sc,7*sc,0,0,Math.PI*2);X.fill();
-    noGlow();return;
+    return;
   }
   X.save();X.translate(x,y);X.scale(sc,sc);
   glow('#ff9900',16);X.fillStyle='#ff6600';
