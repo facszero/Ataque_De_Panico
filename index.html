@@ -29,16 +29,18 @@ const TITLEVID=document.getElementById('titlevid');
 var titleVidReady=false;
 TITLEVID.addEventListener('canplaythrough',function(){titleVidReady=true;});
 TITLEVID.addEventListener('playing',function(){titleVidReady=true;});
-// Use fetch+blob to bypass browser URL safety checks
+// Try fetch first, fall back to XHR — both bypass URL safety check
+function doLoadVideo(url){TITLEVID.src=url;TITLEVID.load();TITLEVID.play().catch(function(){});}
+function tryXHR(){
+  var x=new XMLHttpRequest();x.open('GET','title_bg.mp4',true);x.responseType='blob';
+  x.onload=function(){if(x.status===200)doLoadVideo(URL.createObjectURL(x.response));};
+  x.onerror=function(){console.log('Video XHR also failed.');};
+  x.send();
+}
 fetch('title_bg.mp4')
   .then(function(r){return r.blob();})
-  .then(function(blob){
-    var url=URL.createObjectURL(blob);
-    TITLEVID.src=url;
-    TITLEVID.load();
-    TITLEVID.play().catch(function(){/* needs user gesture */});
-  })
-  .catch(function(e){console.log('Video fetch failed:',e);});
+  .then(function(b){doLoadVideo(URL.createObjectURL(b));})
+  .catch(function(){tryXHR();});
 const W=480,H=720;C.width=W;C.height=H;
 (function resize(){const s=Math.min(innerWidth/W,innerHeight/H);
   C.style.width=W*s+'px';C.style.height=H*s+'px';})();
