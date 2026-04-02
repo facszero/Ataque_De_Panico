@@ -19,28 +19,17 @@ canvas{display:block;touch-action:none}
 </style>
 </head>
 <body>
-<video id="titlevid" loop muted playsinline preload="auto"
-  style="display:none;position:absolute;pointer-events:none"></video>
+<img id="titlebg" src="title_bg.webp" alt=""
+  style="display:none;position:absolute;pointer-events:none">
 <canvas id="c"></canvas>
 <script>
 // ─── CANVAS ───────────────────────────────────────────────
 const C=document.getElementById('c'),X=C.getContext('2d');
-const TITLEVID=document.getElementById('titlevid');
-var titleVidReady=false;
-TITLEVID.addEventListener('canplaythrough',function(){titleVidReady=true;});
-TITLEVID.addEventListener('playing',function(){titleVidReady=true;});
-// Try fetch first, fall back to XHR — both bypass URL safety check
-function doLoadVideo(url){TITLEVID.src=url;TITLEVID.load();TITLEVID.play().catch(function(){});}
-function tryXHR(){
-  var x=new XMLHttpRequest();x.open('GET','title_bg.mp4',true);x.responseType='blob';
-  x.onload=function(){if(x.status===200)doLoadVideo(URL.createObjectURL(x.response));};
-  x.onerror=function(){console.log('Video XHR also failed.');};
-  x.send();
-}
-fetch('title_bg.mp4')
-  .then(function(r){return r.blob();})
-  .then(function(b){doLoadVideo(URL.createObjectURL(b));})
-  .catch(function(){tryXHR();});
+const TITLEBG=document.getElementById('titlebg');
+var titleBgReady=false;
+TITLEBG.onload=function(){titleBgReady=true;};
+TITLEBG.onerror=function(){titleBgReady=false;};
+if(TITLEBG.complete&&TITLEBG.naturalWidth>0)titleBgReady=true;
 const W=480,H=720;C.width=W;C.height=H;
 (function resize(){const s=Math.min(innerWidth/W,innerHeight/H);
   C.style.width=W*s+'px';C.style.height=H*s+'px';})();
@@ -717,23 +706,15 @@ function processSpawns(){
 
 // ─── SCREENS ──────────────────────────────────────────────
 function drawTitle(){
-  // Video background
-  if(titleVidReady && TITLEVID.readyState>=2){
-    if(TITLEVID.paused)TITLEVID.play().catch(function(){});
-    // Scale video to fill canvas (cover)
-    var vw=TITLEVID.videoWidth||W, vh=TITLEVID.videoHeight||H;
-    var scale=Math.max(W/vw, H/vh);
-    var dw=vw*scale, dh=vh*scale;
-    var dx=(W-dw)/2, dy=(H-dh)/2;
-    X.drawImage(TITLEVID, dx, dy, dw, dh);
-    // Dark overlay so text stays readable
-    X.fillStyle='rgba(0,0,0,.52)';X.fillRect(0,0,W,H);
+  // Animated WebP background — works as regular img tag, no security issues
+  if(titleBgReady && TITLEBG.naturalWidth>0){
+    var iw=TITLEBG.naturalWidth, ih=TITLEBG.naturalHeight;
+    var scale=Math.max(W/iw, H/ih);
+    X.drawImage(TITLEBG, (W-iw*scale)/2, (H-ih*scale)/2, iw*scale, ih*scale);
+    X.fillStyle='rgba(0,0,0,.48)';X.fillRect(0,0,W,H);
   } else {
-    // Fallback: static dark sky
     X.fillStyle='#1a2840';X.fillRect(0,0,W,H);
     for(let i=0;i<80;i++){const sx=(i*93+frame*.04)%W,sy=(i*137)%H;const br=.3+ph(i*11)*.7;X.fillStyle=`rgba(255,255,255,${br*.7})`;X.fillRect(sx,sy,br>.8?2:1,1);}
-    // Try to start the video (needs user interaction on mobile)
-    if(!titleVidReady)TITLEVID.load();
   }
   // City silhouette
   X.fillStyle='#243650';
@@ -843,7 +824,6 @@ function drawWin(){
 
 // ─── GAME INIT ────────────────────────────────────────────
 function startGame(){
-  TITLEVID.pause();TITLEVID.currentTime=0;
   G.state='playing';G.level=0;G.score=0;G.combo=0;G.comboT=0;G.bombs=2;G.bgY=0;G.lvlT=0;G.bossOn=false;G.bossWarn=0;
   bullets=[];enemies=[];particles=[];pups=[];boss=null;
   spawnQ=mkSpawns(0);player=new Player(G.sel);
@@ -864,8 +844,6 @@ function loop(){
   X.save();X.translate(ox,oy);
 
   if(G.state==='title'){
-    // Resume video on title
-    if(titleVidReady&&TITLEVID.paused)TITLEVID.play().catch(function(){});
     drawTitle();
     if(anyKey){anyKey=false;sfx.sel();G.state='select';}
   }
