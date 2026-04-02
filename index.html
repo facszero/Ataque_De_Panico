@@ -101,7 +101,11 @@ function handleTap(tx,ty){
     const ns=tx<W/2?0:1;
     if(ns===G.sel)startGame();else{G.sel=ns;sfx.sel();}
   }
-  else if(G.state==='over'){startGame();}
+  else if(G.state==='over'){
+    // Check which half was tapped: left=continue, right=new game
+    if(tx<W/2&&G.continueLevel>0){continueGame();}
+    else{startGame();}
+  }
   else if(G.state==='win'){G.state='title';}
   else if(G.state==='playing'){
     // EXIT button top-right
@@ -141,8 +145,18 @@ let shakeAmt=0;
 function shk(a){shakeAmt=Math.max(shakeAmt,a);}
 
 // ─── GAME STATE ───────────────────────────────────────────
-const G={state:'title',sel:0,level:0,score:0,hi:0,bombs:2,combo:0,comboT:0,bgY:0,lvlT:0,bossOn:false,bossWarn:0,nukeAvail:true};
+const G={state:'title',sel:0,level:0,score:0,hi:0,bombs:2,combo:0,comboT:0,bgY:0,lvlT:0,bossOn:false,bossWarn:0,nukeAvail:true,lives:3,continueLevel:0,continueScore:0};
 let player=null,bullets=[],enemies=[],particles=[],pups=[],boss=null,spawnQ=[];
+
+function continueGame(){
+  G.state='playing';
+  G.level=G.continueLevel;G.score=G.continueScore;
+  G.combo=0;G.comboT=0;G.bombs=2;G.bgY=0;G.lvlT=0;
+  G.bossOn=false;G.bossWarn=0;G.nukeAvail=true;
+  spawnQ=mkSpawns(G.level);
+  enemies=[];bullets=[];particles=[];pups=[];boss=null;
+  player=new Player(G.sel);
+}
 
 function activateNuke(){
   if(!G.nukeAvail||G.state!=='playing')return;
@@ -469,6 +483,11 @@ function drawHUD(){
     X.strokeRect(nukeX-2,nukeY-2,nukeW+4,nukeH+4);noGlow();
   }
 
+  // ── Lives display (top-left area)
+  X.font='bold 13px monospace';X.textAlign='left';
+  glow('#ff4466',8);X.fillStyle='#ff6688';
+  X.fillText('❤'.repeat(Math.max(0,G.lives)),8,H-56);noGlow();
+
   // ── Combo
   if(G.combo>1&&G.comboT>0){
     const a=Math.min(1,G.comboT/40);X.save();X.globalAlpha=a;
@@ -557,7 +576,19 @@ if(K.KeyN){K.KeyN=false;activateNuke();}
     if(this.inv>0)return;
     if(this.shield>0){this.shield=0;shk(6);ptcl(this.x,this.y,'#00aaff',16);return;}
     this.hp-=d;this.inv=95;this.dmgFx=22;shk(10);ptcl(this.x,this.y,'#ff4400',22);sfx.exp();
-    if(this.hp<=0){bigExp(this.x,this.y);G.state='over';}
+    if(this.hp<=0){
+      bigExp(this.x,this.y);
+      G.lives--;
+      if(G.lives>0){
+        // Still has lives — respawn on same level
+        G.state='respawn';G.respawnT=0;
+        G.continueLevel=G.level;G.continueScore=G.score;
+      } else {
+        // No lives left — full game over
+        G.continueLevel=G.level;G.continueScore=G.score;
+        G.state='over';
+      }
+    }
   }
   draw(){
     this.trail.forEach((p,i)=>{const a=i/this.trail.length;X.fillStyle=`rgba(255,${this.type?120:80},0,${a*.3})`;X.beginPath();X.arc(p.x,p.y,4*a,0,Math.PI*2);X.fill();});
@@ -831,14 +862,45 @@ function drawLevelBanner(){
 }
 
 function drawGameOver(){
-  X.fillStyle='rgba(0,0,0,.75)';X.fillRect(0,0,W,H);
-  metalRect(20,H*.3,W-40,102,'#150000','#2a0000','#880000');
-  corners(20,H*.3,W-40,102,10,'#ff2200');
-  glow('#ff0000',22);X.fillStyle='#ee1100';X.font='bold 38px monospace';X.textAlign='center';
-  X.fillText('MISSION',W/2,H*.3+50);X.fillText('FAILED',W/2,H*.3+90);noGlow();
-  metalRect(60,H*.63,W-120,38,'#0a0c08','#141610','rgba(120,90,30,.5)');
-  X.fillStyle='rgba(255,200,80,.85)';X.font='14px monospace';X.textAlign='center';X.fillText(`SCORE: ${fmt(G.score)}`,W/2,H*.63+24);
-  if(Math.sin(frame*.055)>0){X.fillStyle='rgba(255,230,100,.75)';X.font='11px monospace';X.fillText('TOCÁ / ESPACIO PARA REINTENTAR',W/2,H*.84);}
+  X.fillStyle='rgba(0,0,0,.82)';X.fillRect(0,0,W,H);
+  metalRect(10,H*.10,W-20,52,'#1a0000','#2e0808','#cc2200');
+  corners(10,H*.10,W-20,52,10,'#ff4422');
+  glow('#ff4422',16);X.fillStyle='#ff6644';X.font='bold 20px monospace';X.textAlign='center';
+  X.fillText('GAME OVER',W/2,H*.10+36);noGlow();
+  X.fillStyle='rgba(220,180,100,.9)';X.font='bold 13px monospace';
+  X.fillText('SCORE: '+fmt(G.score),W/2,H*.30);
+  X.fillStyle='rgba(180,180,180,.6)';X.font='10px monospace';
+  X.fillText('RECORD: '+fmt(G.hi),W/2,H*.37);
+  const blink=Math.sin(frame*.08)>0;
+  // Left: Continue
+  if(G.continueLevel>0){
+    metalRect(8,H*.46,W/2-14,90,'#001020','#002040','#004488');
+    corners(8,H*.46,W/2-14,90,8,'#4488ff');
+    if(blink)glow('#4488ff',10);
+    X.fillStyle='#88bbff';X.font='bold 12px monospace';X.textAlign='center';
+    X.fillText('CONTINUAR',W/4,H*.46+24);
+    X.fillStyle='#6699ff';X.font='bold 10px monospace';
+    X.fillText('nivel '+(G.continueLevel+1),W/4,H*.46+44);
+    X.fillStyle='rgba(140,170,220,.7)';X.font='8px monospace';
+    X.fillText('score conservado',W/4,H*.46+62);
+    X.fillStyle='#4488ff';X.font='bold 22px monospace';
+    X.fillText('◀',W/4,H*.46+82);
+    noGlow();
+  }
+  // Right: New game
+  metalRect(W/2+6,H*.46,W/2-14,90,'#100800','#201000','#664400');
+  corners(W/2+6,H*.46,W/2-14,90,8,'#ffaa22');
+  if(blink)glow('#ffaa22',8);
+  X.fillStyle='#ffcc66';X.font='bold 12px monospace';X.textAlign='center';
+  X.fillText('NUEVA',W*3/4,H*.46+24);
+  X.fillText('PARTIDA',W*3/4,H*.46+42);
+  X.fillStyle='rgba(200,170,100,.7)';X.font='8px monospace';
+  X.fillText('nivel 1 · score 0',W*3/4,H*.46+62);
+  X.fillStyle='#ffaa22';X.font='bold 22px monospace';
+  X.fillText('▶',W*3/4,H*.46+82);
+  noGlow();
+  X.fillStyle='rgba(180,120,120,.6)';X.font='9px monospace';X.textAlign='center';
+  X.fillText('llegaste al nivel '+(G.continueLevel+1)+' de 9',W/2,H*.86);
 }
 
 function drawWin(){
@@ -899,6 +961,7 @@ function drawWin(){
 // ─── GAME INIT ────────────────────────────────────────────
 function startGame(){
   G.state='playing';G.level=0;G.score=0;G.combo=0;G.comboT=0;G.bombs=2;G.bgY=0;G.lvlT=0;G.bossOn=false;G.bossWarn=0;G.nukeAvail=true;
+  G.lives=3;G.continueLevel=0;G.continueScore=0;G.respawnT=0;
   bullets=[];enemies=[];particles=[];pups=[];boss=null;
   spawnQ=mkSpawns(0);player=new Player(G.sel);
   tone(330,.1,'sine',.3);setTimeout(()=>tone(440,.1,'sine',.3),120);setTimeout(()=>tone(550,.2,'sine',.3),240);
@@ -952,6 +1015,25 @@ function loop(){
     waitNext++;X.fillStyle=`rgba(0,0,0,${Math.min(.7,waitNext/50)})`;X.fillRect(0,0,W,H);
     if(waitNext>40){metalRect(20,H*.38,W-40,78,'#021408','#042e14','#00cc55');corners(20,H*.38,W-40,78,10,'#00ff88');glow('#00ff88',14);X.fillStyle='#00ff88';X.font='bold 18px monospace';X.textAlign='center';X.fillText('ZONA LIBERADA',W/2,H*.38+38);noGlow();X.fillStyle='rgba(200,255,200,.7)';X.font='11px monospace';X.fillText(`AVANZANDO A NIVEL ${G.level+2}...`,W/2,H*.38+62);}
     if(waitNext>180){nextLevel();G.state="playing";waitNext=0;}
+  }
+  else if(G.state==='respawn'){
+    G.respawnT++;
+    drawBG();drawPtcl();drawHUD();
+    // Flash overlay
+    const a=Math.max(0,.8-G.respawnT/80);
+    X.fillStyle=`rgba(255,50,0,${a})`;X.fillRect(0,0,W,H);
+    // Respawn message
+    if(G.respawnT>30){
+      metalRect(20,H*.38,W-40,90,'#0a0008','#1e0010','#cc0055');
+      corners(20,H*.38,W-40,90,10,'#ff4488');
+      glow('#ff4488',14);X.fillStyle='#ff88aa';X.font='bold 16px monospace';X.textAlign='center';
+      X.fillText('¡AERONAVE DESTRUIDA!',W/2,H*.38+30);noGlow();
+      X.fillStyle='#ffaa66';X.font='bold 12px monospace';
+      X.fillText(`VIDAS RESTANTES: ${'❤'.repeat(G.lives)}`,W/2,H*.38+56);
+      X.fillStyle='rgba(200,180,200,.7)';X.font='10px monospace';
+      X.fillText(`NIVEL ${G.level+1} — REINICIANDO...`,W/2,H*.38+78);
+    }
+    if(G.respawnT>120){continueGame();}
   }
   else if(G.state==='over'){
     drawBG();drawPtcl();drawHUD();drawGameOver();
