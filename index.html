@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ataque De Pánico">
+<meta name="theme-color" content="#0a0408">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
 <title>Ataque De Pánico</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -11,10 +18,17 @@ body{background:#000;display:flex;justify-content:center;align-items:center;
 canvas{display:block;touch-action:none}
 </style>
 </head>
-<body><canvas id="c"></canvas>
+<body>
+<video id="titlevid" src="title_bg.mp4" loop muted playsinline preload="auto"
+  style="display:none;position:absolute;pointer-events:none"></video>
+<canvas id="c"></canvas>
 <script>
 // ─── CANVAS ───────────────────────────────────────────────
 const C=document.getElementById('c'),X=C.getContext('2d');
+const TITLEVID=document.getElementById('titlevid');
+var titleVidReady=false;
+TITLEVID.addEventListener('canplaythrough',function(){titleVidReady=true;});
+TITLEVID.load();
 const W=480,H=720;C.width=W;C.height=H;
 (function resize(){const s=Math.min(innerWidth/W,innerHeight/H);
   C.style.width=W*s+'px';C.style.height=H*s+'px';})();
@@ -691,9 +705,24 @@ function processSpawns(){
 
 // ─── SCREENS ──────────────────────────────────────────────
 function drawTitle(){
-  X.fillStyle='#1a2840';X.fillRect(0,0,W,H);
-  // Stars
-  for(let i=0;i<80;i++){const sx=(i*93+frame*.04)%W,sy=(i*137)%H;const br=.3+ph(i*11)*.7;X.fillStyle=`rgba(255,255,255,${br*.7})`;X.fillRect(sx,sy,br>.8?2:1,1);}
+  // Video background
+  if(titleVidReady && TITLEVID.readyState>=2){
+    if(TITLEVID.paused)TITLEVID.play().catch(function(){});
+    // Scale video to fill canvas (cover)
+    var vw=TITLEVID.videoWidth||W, vh=TITLEVID.videoHeight||H;
+    var scale=Math.max(W/vw, H/vh);
+    var dw=vw*scale, dh=vh*scale;
+    var dx=(W-dw)/2, dy=(H-dh)/2;
+    X.drawImage(TITLEVID, dx, dy, dw, dh);
+    // Dark overlay so text stays readable
+    X.fillStyle='rgba(0,0,0,.52)';X.fillRect(0,0,W,H);
+  } else {
+    // Fallback: static dark sky
+    X.fillStyle='#1a2840';X.fillRect(0,0,W,H);
+    for(let i=0;i<80;i++){const sx=(i*93+frame*.04)%W,sy=(i*137)%H;const br=.3+ph(i*11)*.7;X.fillStyle=`rgba(255,255,255,${br*.7})`;X.fillRect(sx,sy,br>.8?2:1,1);}
+    // Try to start the video (needs user interaction on mobile)
+    if(!titleVidReady)TITLEVID.load();
+  }
   // City silhouette
   X.fillStyle='#243650';
   X.beginPath();X.moveTo(0,H);
@@ -802,6 +831,7 @@ function drawWin(){
 
 // ─── GAME INIT ────────────────────────────────────────────
 function startGame(){
+  TITLEVID.pause();TITLEVID.currentTime=0;
   G.state='playing';G.level=0;G.score=0;G.combo=0;G.comboT=0;G.bombs=2;G.bgY=0;G.lvlT=0;G.bossOn=false;G.bossWarn=0;
   bullets=[];enemies=[];particles=[];pups=[];boss=null;
   spawnQ=mkSpawns(0);player=new Player(G.sel);
@@ -822,6 +852,8 @@ function loop(){
   X.save();X.translate(ox,oy);
 
   if(G.state==='title'){
+    // Resume video on title
+    if(titleVidReady&&TITLEVID.paused)TITLEVID.play().catch(function(){});
     drawTitle();
     if(anyKey){anyKey=false;sfx.sel();G.state='select';}
   }
@@ -870,6 +902,15 @@ function loop(){
 }
 
 requestAnimationFrame(loop);
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js', {scope: '/Ataque_De_Panico/'})
+      .then(function(r){ console.log('SW registered:', r.scope); })
+      .catch(function(e){ console.log('SW failed:', e); });
+  });
+}
 </script>
 </body>
 </html>
