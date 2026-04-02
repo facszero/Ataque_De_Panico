@@ -1,5 +1,5 @@
 // Service Worker — Ataque De Pánico PWA
-const CACHE = 'ataque-panico-v1';
+const CACHE = 'ataque-panico-v2';
 const ASSETS = [
   '/Ataque_De_Panico/',
   '/Ataque_De_Panico/index.html',
@@ -7,6 +7,12 @@ const ASSETS = [
   '/Ataque_De_Panico/img/level0.png',
   '/Ataque_De_Panico/img/level1.png',
   '/Ataque_De_Panico/img/level2.png',
+  '/Ataque_De_Panico/img/level3.png',
+  '/Ataque_De_Panico/img/level4.png',
+  '/Ataque_De_Panico/img/level5.png',
+  '/Ataque_De_Panico/img/level6.png',
+  '/Ataque_De_Panico/img/level7.png',
+  '/Ataque_De_Panico/img/level8.png',
   '/Ataque_De_Panico/img/sprites/drone.png',
   '/Ataque_De_Panico/img/sprites/drone_fast.png',
   '/Ataque_De_Panico/img/sprites/tripod.png',
