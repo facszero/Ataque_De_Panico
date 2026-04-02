@@ -175,10 +175,10 @@ function addScore(pts){
 }
 
 // ─── IMAGE BACKGROUNDS ────────────────────────────────────
-var bgImgs=[null,null,null];
-var bgLoaded=[false,false,false];
+var bgImgs=[null,null,null,null,null,null,null,null,null];
+var bgLoaded=[false,false,false,false,false,false,false,false,false];
 (function preload(){
-  for(var i=0;i<3;i++){
+  for(var i=0;i<9;i++){
     (function(idx){
       var im=new Image();
       im.onload=function(){bgImgs[idx]=im;bgLoaded[idx]=true;};
@@ -215,28 +215,16 @@ function drawSprite(name,x,y,w,h,angle){
 function drawBG(){
   var lvl=G.level;
   var im=bgImgs[lvl];
-
   if(im&&bgLoaded[lvl]){
-    // Image is 341x1536 → scale to fill W=480 wide
-    var scale=W/im.width;           // 480/341 ≈ 1.407
-    var dw=W;
-    var dh=im.height*scale;         // 1536*1.407 ≈ 2160px tall
-
-    // Scroll: bgY increases. We tile the image vertically.
-    var offset=(G.bgY*0.9)%dh;     // scroll upward
-
-    // Draw two copies tiled — image scrolls bottom-to-top
-    X.drawImage(im, 0, offset-dh,  dw, dh);
-    X.drawImage(im, 0, offset,     dw, dh);
-    X.drawImage(im, 0, offset+dh,  dw, dh);
+    var dw=W, dh=im.height*(W/im.width);
+    var offset=(G.bgY*0.9)%dh;
+    X.drawImage(im,0,offset-dh,dw,dh);
+    X.drawImage(im,0,offset,dw,dh);
+    X.drawImage(im,0,offset+dh,dw,dh);
   } else {
-    // Fallback while loading
-    X.fillStyle=BG_FALLBACK[lvl];
-    X.fillRect(0,0,W,H);
-    // Simple grid hint
-    X.strokeStyle='rgba(0,0,0,.12)';X.lineWidth=1;
-    for(var i=0;i<10;i++){X.beginPath();X.moveTo(i*(W/10),0);X.lineTo(i*(W/10),H);X.stroke();}
-    for(var i=0;i<14;i++){X.beginPath();X.moveTo(0,i*(H/14));X.lineTo(W,i*(H/14));X.stroke();}
+    var fb=['#6b6455','#585048','#504840','#6a5e48','#524a40','#4a4038',
+            '#5a4838','#483c34','#3c3028'];
+    X.fillStyle=fb[Math.min(lvl,8)];X.fillRect(0,0,W,H);
   }
 }
 
@@ -504,7 +492,9 @@ function drawBossHPBar(){
   X.fillStyle=g;X.fillRect(39,47,(W-78)*pct,14);
   X.strokeStyle=p2?'#ff4400':'#00cc66';X.lineWidth=1.5;X.strokeRect(38,46,W-76,16);
   corners(38,46,W-76,16,8,p2?'#ff4400':'#00cc66');
-  goldTxt(['NODRIZA ALIENÍGENA','ROBOT DESTRUCTOR','ACORAZADO ALIEN'][G.level],W/2,59,9);
+  goldTxt(['NODRIZA ALIENÍGENA','ROBOT DESTRUCTOR','ACORAZADO ALIEN',
+     'NODRIZA MK-II','ROBOT DEVASTADOR','ACORAZADO DREADNOUGHT',
+     'NODRIZA SUPREMA','ROBOT APOCALIPSIS','SEÑOR DE LA INVASIÓN'][G.level],W/2,59,9);
   if(p2){glow('#ff0000',8);X.fillStyle='#ff2222';X.font='bold 8px monospace';X.textAlign='right';X.fillText('PHASE 2',W-44,59);noGlow();}
 }
 
@@ -665,15 +655,30 @@ class Enemy{
 
 // ─── BOSS ─────────────────────────────────────────────────
 class Boss{
-  constructor(lvl){this.lvl=lvl;this.x=W/2;this.y=-150;this.tY=110;this.dead=false;this.entering=true;this.ph=0;this.timer=0;this.apt=0;this.apn=0;this.phase2=false;
-    switch(lvl){case 0:this.hp=100;this.r=65;this.sc=10000;break;case 1:this.hp=150;this.r=70;this.sc=15000;break;default:this.hp=200;this.r=72;this.sc=20000;}this.mhp=this.hp;}
+  constructor(lvl){
+    this.lvl=lvl;this.x=W/2;this.y=-150;this.tY=110;this.dead=false;this.entering=true;this.ph=0;this.timer=0;this.apt=0;this.apn=0;this.phase2=false;
+    // Cycle: 0-2=cycle1, 3-5=cycle2, 6-8=cycle3
+    var cycle=Math.floor(lvl/3);
+    var bossType=lvl%3;
+    var hpMult=[1,1.6,2.5][cycle];
+    var scMult=[1,2,3.5][cycle];
+    var baseHP=[100,150,200][bossType];
+    var baseSC=[10000,15000,20000][bossType];
+    this.r=[65,70,72][bossType];
+    this.hp=Math.floor(baseHP*hpMult);
+    this.sc=Math.floor(baseSC*scMult);
+    this.mhp=this.hp;
+    // Phase2 triggers earlier each cycle
+    this.phase2thresh=[0.45,0.40,0.30][cycle];
+    this.speedMult=[1,1.2,1.5][cycle];
+  }
   update(){this.timer++;this.ph++;
     if(this.entering){this.y=lerp(this.y,this.tY,.038);if(Math.abs(this.y-this.tY)<5){this.y=this.tY;this.entering=false;}return;}
     this.x=W/2+Math.sin(this.ph*.013)*160;this.apt--;
     if(this.apt<=0){this.attack();this.apt=this.phase2?48:65;this.apn=(this.apn+1)%3;}
-    if(this.hp<=this.mhp*.45&&!this.phase2){this.phase2=true;shk(18);sfx.exp(true);ptcl(this.x,this.y,'#ff4400',40);}
+    if(this.hp<=this.mhp*this.phase2thresh&&!this.phase2){this.phase2=true;shk(18);sfx.exp(true);ptcl(this.x,this.y,'#ff4400',40);}
   }
-  attack(){const s=this.phase2?5.2:3.8;
+  attack(){const s=(this.phase2?5.2:3.8)*this.speedMult;
     if(this.apn===0&&player){const dx=player.x-this.x,dy=player.y-this.y,l=Math.hypot(dx,dy);
       bullets.push(mkB(this.x,this.y+38,dx/l*s,dy/l*s,false,1,'plasma'));
       if(this.phase2){bullets.push(mkB(this.x-14,this.y+38,dx/l*s+.8,dy/l*s,false,1,'plasma'));bullets.push(mkB(this.x+14,this.y+38,dx/l*s-.8,dy/l*s,false,1,'plasma'));}
@@ -682,7 +687,7 @@ class Boss{
   }
   hit(d){this.hp-=d;ptcl(this.x,this.y,'#00ffcc',7);shk(3);
     if(this.hp<=0){this.dead=true;addScore(this.sc);bigExp(this.x,this.y);G.bombs=Math.min(9,G.bombs+1);for(let i=0;i<8;i++)setTimeout(()=>bigExp(this.x+rnd(-80,80),this.y+rnd(-70,70)),i*140);}}
-  draw(){X.save();drawBoss(this.lvl,this.x,this.y,this.timer,this.phase2);X.restore();drawBossHPBar();}
+  draw(){X.save();drawBoss(this.lvl%3,this.x,this.y,this.timer,this.phase2);X.restore();drawBossHPBar();}
 }
 
 // ─── POWER-UPS ────────────────────────────────────────────
@@ -699,12 +704,21 @@ class PUp{
 
 // ─── SPAWNER ──────────────────────────────────────────────
 const SPAWN_SCRIPTS=[
+  // Ciclo 1 — Ciudad intacta
   [{t:80,tp:'vee',n:3},{t:200,tp:'vee',n:5},{t:330,tp:'t',n:2},{t:460,tp:'a',n:2},{t:590,tp:'sw',n:8},{t:710,tp:'t',n:3},{t:850,tp:'m',n:1},{t:1010,tp:'sw',n:10},{t:1220,tp:'boss'}],
   [{t:70,tp:'t',n:2},{t:180,tp:'sw',n:7},{t:300,tp:'t',n:4},{t:430,tp:'a',n:3},{t:560,tp:'sw',n:11},{t:700,tp:'t',n:5},{t:840,tp:'m',n:2},{t:1010,tp:'sw',n:13},{t:1220,tp:'boss'}],
   [{t:60,tp:'sw',n:10},{t:170,tp:'t',n:4},{t:290,tp:'a',n:5},{t:420,tp:'sw',n:14},{t:550,tp:'t',n:6},{t:680,tp:'a',n:6},{t:820,tp:'sw',n:16},{t:960,tp:'m',n:3},{t:1160,tp:'boss'}],
+  // Ciclo 2 — Ciudad en llamas (más rápido, más denso)
+  [{t:60,tp:'sw',n:8},{t:160,tp:'t',n:3},{t:280,tp:'a',n:3},{t:400,tp:'sw',n:12},{t:520,tp:'t',n:4},{t:650,tp:'a',n:4},{t:780,tp:'m',n:2},{t:920,tp:'sw',n:14},{t:1100,tp:'boss'}],
+  [{t:50,tp:'t',n:3},{t:150,tp:'sw',n:10},{t:270,tp:'t',n:5},{t:390,tp:'a',n:4},{t:510,tp:'sw',n:14},{t:640,tp:'t',n:6},{t:770,tp:'m',n:2},{t:920,tp:'sw',n:16},{t:1100,tp:'boss'}],
+  [{t:45,tp:'sw',n:12},{t:150,tp:'t',n:5},{t:265,tp:'a',n:6},{t:380,tp:'sw',n:16},{t:500,tp:'t',n:7},{t:630,tp:'a',n:7},{t:760,tp:'m',n:3},{t:900,tp:'sw',n:18},{t:1080,tp:'boss'}],
+  // Ciclo 3 — Ciudad destruida (máxima intensidad)
+  [{t:40,tp:'sw',n:12},{t:130,tp:'t',n:4},{t:240,tp:'a',n:5},{t:350,tp:'sw',n:16},{t:460,tp:'t',n:6},{t:580,tp:'m',n:2},{t:700,tp:'sw',n:18},{t:840,tp:'t',n:7},{t:1000,tp:'boss'}],
+  [{t:35,tp:'t',n:4},{t:130,tp:'sw',n:14},{t:245,tp:'t',n:6},{t:360,tp:'a',n:6},{t:475,tp:'sw',n:18},{t:600,tp:'m',n:3},{t:730,tp:'sw',n:20},{t:870,tp:'t',n:8},{t:1000,tp:'boss'}],
+  [{t:30,tp:'sw',n:14},{t:120,tp:'t',n:6},{t:230,tp:'a',n:8},{t:340,tp:'sw',n:18},{t:450,tp:'t',n:8},{t:560,tp:'a',n:8},{t:670,tp:'m',n:4},{t:800,tp:'sw',n:22},{t:960,tp:'boss'}],
 ];
 
-function mkSpawns(lvl){return [...SPAWN_SCRIPTS[Math.min(lvl,2)]];}
+function mkSpawns(lvl){return [...SPAWN_SCRIPTS[Math.min(lvl,8)]];}
 
 function processSpawns(){
   if(G.bossOn)return;
@@ -796,7 +810,9 @@ function drawWarning(){
     glow('#ff0000',30);metalRect(20,H*.38,W-40,76,'#220000','#440000','#cc0000');
     corners(20,H*.38,W-40,76,10,'#ff0000');
     X.fillStyle='#ff0000';X.font='bold 38px monospace';X.textAlign='center';X.fillText('WARNING!',W/2,H*.38+52);noGlow();
-    X.fillStyle='rgba(255,180,60,.8)';X.font='10px monospace';X.fillText(['NODRIZA ALIENÍGENA','ROBOT DESTRUCTOR','ACORAZADO ALIEN'][G.level]+' APPROACHING',W/2,H*.38+70);
+    X.fillStyle='rgba(255,180,60,.8)';X.font='10px monospace';X.fillText(['NODRIZA ALIENÍGENA','ROBOT DESTRUCTOR','ACORAZADO ALIEN',
+     'NODRIZA MK-II','ROBOT DEVASTADOR','ACORAZADO DREADNOUGHT',
+     'NODRIZA SUPREMA','ROBOT APOCALIPSIS','SEÑOR DE LA INVASIÓN'][G.level]+' APPROACHING',W/2,H*.38+70);
   }
 }
 
@@ -808,7 +824,9 @@ function drawLevelBanner(){
   corners(20,H*.42,W-40,62,8,'rgba(100,160,60,.7)');
   goldTxt(`LEVEL ${G.level+1}`,W/2,H*.42+24,11);
   X.fillStyle='rgba(255,255,255,.9)';X.font='bold 16px monospace';X.textAlign='center';
-  X.fillText(['RAMBLA SUR','CENTRO · PALACIO SALVO','PUERTO · CIUDAD VIEJA'][G.level],W/2,H*.42+50);
+  X.fillText(['RAMBLA SUR','CENTRO · PALACIO SALVO','PUERTO · CIUDAD VIEJA',
+     'RAMBLA EN LLAMAS','CENTRO BAJO FUEGO','PLAZA DEVASTADA',
+     'RAMBLA FINAL','CENTRO COLAPSADO','NÚCLEO DE LA INVASIÓN'][G.level],W/2,H*.42+50);
   X.restore();
 }
 
@@ -824,14 +842,58 @@ function drawGameOver(){
 }
 
 function drawWin(){
-  X.fillStyle='rgba(0,0,0,.8)';X.fillRect(0,0,W,H);
-  metalRect(10,40,W-20,46,'#0a1008','#162014','#00cc55');
-  corners(10,40,W-20,46,12,'#00ff88');
-  glow('#00ff88',18);X.strokeStyle='#00ff88';X.lineWidth=2;X.strokeRect(11,41,W-22,44);noGlow();
-  X.fillStyle='#00ff88';X.font='bold 20px monospace';X.textAlign='center';X.fillText('¡INVASIÓN REPELIDA!',W/2,73);
-  if(G.score>=G.hi){glow('#ffff00',10);X.fillStyle='#ffff44';X.font='bold 12px monospace';X.fillText('★ NUEVO RÉCORD ★',W/2,H*.45);noGlow();}
-  X.fillStyle='rgba(255,220,100,.9)';X.font='15px monospace';X.fillText(`SCORE: ${fmt(G.score)}`,W/2,H*.55);
-  if(Math.sin(frame*.055)>0){X.fillStyle='rgba(200,200,200,.7)';X.font='11px monospace';X.fillText('TOCÁ PARA VOLVER AL MENÚ',W/2,H*.75);}
+  X.fillStyle='rgba(0,0,0,.88)';X.fillRect(0,0,W,H);
+
+  // ── Título ──────────────────────────────────────────────
+  metalRect(8,10,W-16,52,'#021408','#042e14','#00cc55');
+  corners(8,10,W-16,52,10,'#00ff88');
+  glow('#00ff88',20);X.fillStyle='#00ff88';X.font='bold 20px monospace';X.textAlign='center';
+  X.fillText('¡INVASIÓN REPELIDA!',W/2,30);noGlow();
+  X.fillStyle='rgba(180,255,200,.7)';X.font='10px monospace';
+  X.fillText('9 ZONAS LIBERADAS · MONTEVIDEO SALVADA',W/2,54);
+
+  // ── Estrellas animadas ──────────────────────────────────
+  for(let i=0;i<20;i++){
+    const sx=(i*97+frame*.6)%W, sy=((i*137+frame*.4)%( H-120))+70;
+    const br=0.4+Math.sin(frame*.05+i)*0.6;
+    X.fillStyle=`rgba(255,220,80,${br*.8})`;
+    X.font='10px monospace';X.textAlign='center';X.fillText('★',sx,sy);
+  }
+
+  // ── Desglose de puntaje ─────────────────────────────────
+  const rows=[
+    ['NIVELES COMPLETADOS', '9 / 9',         '#44ff88'],
+    ['ENEMIGOS DESTRUIDOS', G.combo>0?`COMBO ×${G.combo}`:'—', '#ffaa44'],
+    ['PUNTAJE FINAL',       fmt(G.score,8),  '#ffee44'],
+    ['RÉCORD',              fmt(G.hi,8),     '#ff8844'],
+  ];
+  rows.forEach((r,i)=>{
+    const ry=H*.38+i*46;
+    metalRect(14,ry,W-28,38,i===2?'#0a0c00':'#080e08',i===2?'#1e1e00':'#0c140c',i===2?'#aaaa00':'rgba(0,180,80,.35)');
+    X.fillStyle='rgba(200,200,200,.7)';X.font='9px monospace';X.textAlign='left';X.fillText(r[0],26,ry+15);
+    glow(r[2],i===2?10:5);X.fillStyle=r[2];X.font=`bold ${i===2?16:13}px monospace`;X.textAlign='right';
+    X.fillText(r[1],W-26,ry+26);noGlow();
+  });
+
+  // ── Nuevo récord ────────────────────────────────────────
+  if(G.score>=G.hi&&Math.sin(frame*.08)>0){
+    glow('#ffff00',14);X.fillStyle='#ffff44';X.font='bold 13px monospace';X.textAlign='center';
+    X.fillText('★ ¡NUEVO RÉCORD HISTÓRICO! ★',W/2,H*.82);noGlow();
+  }
+
+  // ── Créditos ─────────────────────────────────────────────
+  metalRect(14,H*.84,W-28,50,'#040808','#080e10','rgba(0,150,200,.3)');
+  X.fillStyle='rgba(140,200,220,.8)';X.font='bold 8px monospace';X.textAlign='center';
+  X.fillText('ATAQUE DE PÁNICO · MONTEVIDEO 2099',W/2,H*.84+14);
+  X.fillStyle='rgba(100,150,160,.6)';X.font='8px monospace';
+  X.fillText('Inspirado en el corto de Federico Alvarez',W/2,H*.84+27);
+  X.fillText('FAU — Fuerza Aérea Uruguaya',W/2,H*.84+40);
+
+  // ── Continuar ────────────────────────────────────────────
+  if(Math.sin(frame*.055)>0){
+    glow('#ffcc00',8);X.fillStyle='#ffe566';X.font='bold 11px monospace';X.textAlign='center';
+    X.fillText('TOCÁ PARA VOLVER AL MENÚ',W/2,H*.96);noGlow();
+  }
 }
 
 // ─── GAME INIT ────────────────────────────────────────────
@@ -873,7 +935,7 @@ function loop(){
     updBullets();
     enemies.forEach(e=>{if(!e.dead)e.update();});enemies=enemies.filter(e=>!e.dead);
     if(boss&&!boss.dead)boss.update();
-    if(boss&&boss.dead){boss=null;G.bossOn=false;if(G.level>=2){if(G.score>G.hi)G.hi=G.score;G.state='win';}else{waitNext=0;G.state='next';}}
+    if(boss&&boss.dead){boss=null;G.bossOn=false;if(G.level>=8){if(G.score>G.hi)G.hi=G.score;G.state='win';}else{waitNext=0;G.state='next';}}
     updPtcl();pups.forEach(p=>p.update());pups=pups.filter(p=>!p.dead);
     processSpawns();if(bullets.length>550)bullets.splice(0,100);
     if(G.bossWarn>0)G.bossWarn--;
