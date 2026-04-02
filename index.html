@@ -109,6 +109,19 @@ function darken(h,a){
   return '#'+(r<16?'0':'')+r.toString(16)+(g<16?'0':'')+g.toString(16)+(b<16?'0':'')+b.toString(16);
 }
 
+let shakeAmt=0;
+function shk(a){shakeAmt=Math.max(shakeAmt,a);}
+
+// ─── GAME STATE ───────────────────────────────────────────
+const G={state:'title',sel:0,level:0,score:0,hi:0,bombs:2,combo:0,comboT:0,bgY:0,lvlT:0,bossOn:false,bossWarn:0};
+let player=null,bullets=[],enemies=[],particles=[],pups=[],boss=null,spawnQ=[];
+
+function addScore(pts){
+  const m=G.combo>5?3:G.combo>2?2:1;
+  G.score+=pts*m;G.combo++;G.comboT=120;
+  if(G.score>G.hi)G.hi=G.score;
+}
+
 // ─── IMAGE BACKGROUNDS ────────────────────────────────────
 var bgImgs=[null,null,null];
 var bgLoaded=[false,false,false];
