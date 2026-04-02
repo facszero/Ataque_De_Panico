@@ -60,7 +60,7 @@ const sfx={
 
 // ─── INPUT ────────────────────────────────────────────────
 const K={};
-let anyKey=false,frame=0;
+let anyKey=false,frame=0,titleT=0;
 // Touch joystick
 let tId=null,t2Id=null,tSX=0,tSY=0,tDX=0,tDY=0,tActive=false,tSpec=false,tSpecFired=false;
 let tapX=0,tapY=0,tapPending=false;
@@ -705,8 +705,8 @@ function processSpawns(){
 }
 
 // ─── SCREENS ──────────────────────────────────────────────
+function fmt(n,z){z=z||6;return String(Math.floor(n)).padStart(z,"0");}
 function drawTitle(){
-  titleT++;
   // ── Background: animated WebP or fallback sky
   if(titleBgReady && TITLEBG.naturalWidth>0){
     var iw=TITLEBG.naturalWidth, ih=TITLEBG.naturalHeight;
