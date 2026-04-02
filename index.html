@@ -19,7 +19,7 @@ canvas{display:block;touch-action:none}
 </style>
 </head>
 <body>
-<video id="titlevid" src="title_bg.mp4" loop muted playsinline preload="auto"
+<video id="titlevid" loop muted playsinline preload="auto"
   style="display:none;position:absolute;pointer-events:none"></video>
 <canvas id="c"></canvas>
 <script>
@@ -28,7 +28,17 @@ const C=document.getElementById('c'),X=C.getContext('2d');
 const TITLEVID=document.getElementById('titlevid');
 var titleVidReady=false;
 TITLEVID.addEventListener('canplaythrough',function(){titleVidReady=true;});
-TITLEVID.load();
+TITLEVID.addEventListener('playing',function(){titleVidReady=true;});
+// Use fetch+blob to bypass browser URL safety checks
+fetch('title_bg.mp4')
+  .then(function(r){return r.blob();})
+  .then(function(blob){
+    var url=URL.createObjectURL(blob);
+    TITLEVID.src=url;
+    TITLEVID.load();
+    TITLEVID.play().catch(function(){/* needs user gesture */});
+  })
+  .catch(function(e){console.log('Video fetch failed:',e);});
 const W=480,H=720;C.width=W;C.height=H;
 (function resize(){const s=Math.min(innerWidth/W,innerHeight/H);
   C.style.width=W*s+'px';C.style.height=H*s+'px';})();
