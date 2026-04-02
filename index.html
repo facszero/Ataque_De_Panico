@@ -103,6 +103,19 @@ function handleTap(tx,ty){
   }
   else if(G.state==='over'){startGame();}
   else if(G.state==='win'){G.state='title';}
+  else if(G.state==='playing'){
+    // EXIT button top-right
+    if(tx>W-68&&tx<W-4&&ty>4&&ty<40){
+      G.state='select';
+      bullets=[];enemies=[];particles=[];pups=[];boss=null;
+      G.bossOn=false;G.bossWarn=0;
+      return;
+    }
+    // NUKE button bottom-right
+    if(tx>W-74&&tx<W-4&&ty>H-80&&ty<H-8){
+      activateNuke();return;
+    }
+  }
 }
 
 // ─── UTILS ────────────────────────────────────────────────
@@ -128,8 +141,32 @@ let shakeAmt=0;
 function shk(a){shakeAmt=Math.max(shakeAmt,a);}
 
 // ─── GAME STATE ───────────────────────────────────────────
-const G={state:'title',sel:0,level:0,score:0,hi:0,bombs:2,combo:0,comboT:0,bgY:0,lvlT:0,bossOn:false,bossWarn:0};
+const G={state:'title',sel:0,level:0,score:0,hi:0,bombs:2,combo:0,comboT:0,bgY:0,lvlT:0,bossOn:false,bossWarn:0,nukeAvail:true};
 let player=null,bullets=[],enemies=[],particles=[],pups=[],boss=null,spawnQ=[];
+
+function activateNuke(){
+  if(!G.nukeAvail||G.state!=='playing')return;
+  G.nukeAvail=false;
+  // Destroy all enemies
+  enemies.forEach(e=>{
+    if(!e.dead){
+      bigExp(e.x,e.y);
+      addScore(Math.floor(e.sc*0.5));
+      e.dead=true;
+    }
+  });
+  // 30% damage to boss
+  if(boss&&!boss.dead){
+    const dmg=Math.floor(boss.mhp*0.30);
+    boss.hp=Math.max(1,boss.hp-dmg);
+    for(let i=0;i<6;i++)setTimeout(()=>bigExp(boss.x+rnd(-60,60),boss.y+rnd(-50,50)),i*120);
+    sfx.exp(true);
+  }
+  // Big flash effect
+  ptcl(W/2,H/2,'#ffffff',60);ptcl(W/2,H/2,'#ffcc00',40);ptcl(W/2,H/2,'#ff6600',30);
+  shk(20);sfx.exp(true);
+  setTimeout(()=>sfx.exp(true),200);
+}
 
 function addScore(pts){
   const m=G.combo>5?3:G.combo>2?2:1;
@@ -411,7 +448,40 @@ function drawHUD(){
   if(player)for(let i=0;i<3;i++){X.fillStyle=i<=player.wl?'#ffcc00':'rgba(80,60,20,.4)';X.fillRect(W-58+i*18,H-42,14,12);X.strokeStyle='rgba(120,90,30,.4)';X.lineWidth=1;X.strokeRect(W-58+i*18,H-42,14,12);}
   X.fillStyle='rgba(255,190,60,.45)';X.font='8px monospace';X.textAlign='right';
   X.fillText(player?.type===0?'PRECISION STRIKE':'HEAVY FIREPOWER',W-8,H-16);
-  // Combo
+  // ── EXIT button (top-right HUD)
+  const exitX=W-68, exitY=4, exitW=64, exitH=36;
+  X.fillStyle='rgba(80,20,20,.85)';X.fillRect(exitX,exitY,exitW,exitH);
+  X.strokeStyle='rgba(180,60,40,.8)';X.lineWidth=1.5;X.strokeRect(exitX,exitY,exitW,exitH);
+  X.fillStyle='rgba(255,100,60,.9)';X.font='bold 10px monospace';X.textAlign='center';
+  X.fillText('⬅ EXIT',exitX+exitW/2,exitY+exitH/2+4);
+
+  // ── NUKE button (bottom-right)
+  const nukeX=W-74, nukeY=H-80, nukeW=70, nukeH=68;
+  const nukeOn=G.nukeAvail&&G.state==='playing';
+  X.fillStyle=nukeOn?'rgba(180,40,0,.9)':'rgba(40,30,30,.7)';
+  X.fillRect(nukeX,nukeY,nukeW,nukeH);
+  if(nukeOn){
+    glow('#ff4400',14);
+    X.strokeStyle='rgba(255,100,0,.9)';
+  } else {
+    X.strokeStyle='rgba(80,50,50,.5)';
+  }
+  X.lineWidth=2;X.strokeRect(nukeX,nukeY,nukeW,nukeH);noGlow();
+  // Icon: explosion symbol
+  X.font=nukeOn?'bold 26px monospace':'bold 22px monospace';
+  X.textAlign='center';
+  X.fillStyle=nukeOn?'#ffcc44':'rgba(120,80,80,.7)';
+  X.fillText('💥',nukeX+nukeW/2,nukeY+nukeH/2-2);
+  X.font='bold 8px monospace';
+  X.fillStyle=nukeOn?'rgba(255,200,100,.9)':'rgba(100,70,70,.6)';
+  X.fillText(nukeOn?'NUKE':'USADO',nukeX+nukeW/2,nukeY+nukeH-8);
+  if(nukeOn&&Math.sin(frame*.12)>0.3){
+    glow('#ff4400',8);
+    X.strokeStyle='rgba(255,80,0,.4)';X.lineWidth=3;
+    X.strokeRect(nukeX-2,nukeY-2,nukeW+4,nukeH+4);noGlow();
+  }
+
+  // ── Combo
   if(G.combo>1&&G.comboT>0){
     const a=Math.min(1,G.comboT/40);X.save();X.globalAlpha=a;
     glow('#ffcc00',14);X.fillStyle='#ffe566';X.font=`bold ${14+Math.min(G.combo,8)}px monospace`;X.textAlign='center';
@@ -462,6 +532,8 @@ class Player{
     this.x=clamp(this.x+dx*sp,22,W-22);this.y=clamp(this.y+dy*sp,44,H-52);
     this.trail.push({x:this.x,y:this.y+24});if(this.trail.length>12)this.trail.shift();
     if(--this.st<=0){this.fire();this.st=this.sft;}
+    // N key = nuke
+if(K.KeyN){K.KeyN=false;activateNuke();}
     const specKey=K.Space||K.KeyX||(tSpec&&!tSpecFired);
     if(specKey&&this.sp>=100&&this.spCool<=0){this.special();if(tSpec)tSpecFired=true;}
     if(this.spCool>0)this.spCool--;
@@ -764,13 +836,13 @@ function drawWin(){
 
 // ─── GAME INIT ────────────────────────────────────────────
 function startGame(){
-  G.state='playing';G.level=0;G.score=0;G.combo=0;G.comboT=0;G.bombs=2;G.bgY=0;G.lvlT=0;G.bossOn=false;G.bossWarn=0;
+  G.state='playing';G.level=0;G.score=0;G.combo=0;G.comboT=0;G.bombs=2;G.bgY=0;G.lvlT=0;G.bossOn=false;G.bossWarn=0;G.nukeAvail=true;
   bullets=[];enemies=[];particles=[];pups=[];boss=null;
   spawnQ=mkSpawns(0);player=new Player(G.sel);
   tone(330,.1,'sine',.3);setTimeout(()=>tone(440,.1,'sine',.3),120);setTimeout(()=>tone(550,.2,'sine',.3),240);
 }
 function nextLevel(){
-  G.level++;G.bgY=0;G.lvlT=0;G.bossOn=false;G.bossWarn=0;
+  G.level++;G.bgY=0;G.lvlT=0;G.bossOn=false;G.bossWarn=0;G.nukeAvail=true;
   bullets=[];enemies=[];particles=[];pups=[];boss=null;
   spawnQ=mkSpawns(G.level);
   if(player){player.wl=Math.max(0,player.wl-1);player.hp=Math.min(player.mhp,player.hp+1);player.x=W/2;player.y=H-120;player.sp=100;player.inv=90;}
