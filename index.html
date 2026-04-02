@@ -151,7 +151,7 @@ let player=null,bullets=[],enemies=[],particles=[],pups=[],boss=null,spawnQ=[];
 function continueGame(){
   G.state='playing';
   G.level=G.continueLevel;G.score=G.continueScore;
-  G.combo=0;G.comboT=0;G.bombs=2;G.bgY=0;G.lvlT=0;
+  G.combo=0;G.comboT=0;G.bombs=2;G.bgY=800;G.lvlT=0;
   G.bossOn=false;G.bossWarn=0;G.nukeAvail=true;
   spawnQ=mkSpawns(G.level);
   enemies=[];bullets=[];particles=[];pups=[];boss=null;
@@ -960,14 +960,14 @@ function drawWin(){
 
 // ─── GAME INIT ────────────────────────────────────────────
 function startGame(){
-  G.state='playing';G.level=0;G.score=0;G.combo=0;G.comboT=0;G.bombs=2;G.bgY=0;G.lvlT=0;G.bossOn=false;G.bossWarn=0;G.nukeAvail=true;
+  G.state='playing';G.level=0;G.score=0;G.combo=0;G.comboT=0;G.bombs=2;G.bgY=800;G.lvlT=0;G.bossOn=false;G.bossWarn=0;G.nukeAvail=true;
   G.lives=3;G.continueLevel=0;G.continueScore=0;G.respawnT=0;
   bullets=[];enemies=[];particles=[];pups=[];boss=null;
   spawnQ=mkSpawns(0);player=new Player(G.sel);
   tone(330,.1,'sine',.3);setTimeout(()=>tone(440,.1,'sine',.3),120);setTimeout(()=>tone(550,.2,'sine',.3),240);
 }
 function nextLevel(){
-  G.level++;G.bgY=0;G.lvlT=0;G.bossOn=false;G.bossWarn=0;G.nukeAvail=true;
+  G.level++;G.bgY=800;G.lvlT=0;G.bossOn=false;G.bossWarn=0;G.nukeAvail=true;
   bullets=[];enemies=[];particles=[];pups=[];boss=null;
   spawnQ=mkSpawns(G.level);
   if(player){player.wl=Math.max(0,player.wl-1);player.hp=Math.min(player.mhp,player.hp+1);player.x=W/2;player.y=H-120;player.sp=100;player.inv=90;}
