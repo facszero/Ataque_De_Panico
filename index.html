@@ -175,7 +175,7 @@ function activateNuke(){
     sfx.exp(true);
   }
   // Big flash effect
-  ptcl(W/2,H/2,'#ffffff',60);ptcl(W/2,H/2,'#ffcc00',40);ptcl(W/2,H/2,'#ff6600',30);
+  ptcl(W/2,H/2,'#ffffff',12);ptcl(W/2,H/2,'#ffcc00',10);ptcl(W/2,H/2,'#ff6600',8);
   shk(20);sfx.exp(true);
   setTimeout(()=>sfx.exp(true),200);
 }
@@ -515,9 +515,9 @@ function drawBossHPBar(){
 }
 
 // ─── PARTICLES ────────────────────────────────────────────
-function ptcl(x,y,c,n=8){for(let i=0;i<n;i++){const a=rnd(0,Math.PI*2),s=rnd(2.5,8);particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,c,life:rnd(20,48),ml:48,sz:rnd(1.5,4)});}}
-function bigExp(x,y){ptcl(x,y,'#ff6600',26);ptcl(x,y,'#ffcc00',16);ptcl(x,y,'#ff2200',12);ptcl(x,y,'#fff',8);shk(12);sfx.exp(true);}
-function updPtcl(){particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.vx*=.96;p.life--;});particles=particles.filter(p=>p.life>0);if(particles.length>400)particles.splice(0,80);}
+function ptcl(x,y,c,n=8){n=Math.min(n,12);for(let i=0;i<n;i++){const a=rnd(0,Math.PI*2),s=rnd(2.5,8);particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,c,life:rnd(20,48),ml:48,sz:rnd(1.5,4)});}}
+function bigExp(x,y){ptcl(x,y,'#ff6600',10);ptcl(x,y,'#ffcc00',7);ptcl(x,y,'#ff2200',5);shk(10);sfx.exp(true);}
+function updPtcl(){particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.vx*=.96;p.life--;});particles=particles.filter(p=>p.life>0);if(particles.length>100)particles.splice(0,particles.length-100);}
 function drawPtcl(){particles.forEach(p=>{X.globalAlpha=p.life/p.ml;X.fillStyle=p.c;X.beginPath();X.arc(p.x,p.y,p.sz*(p.life/p.ml),0,Math.PI*2);X.fill();});X.globalAlpha=1;}
 
 // ─── PLAYER ───────────────────────────────────────────────
