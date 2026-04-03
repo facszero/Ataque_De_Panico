@@ -229,20 +229,9 @@ function drawBG(){
   var im=bgImgs[lvl];
   if(im&&bgLoaded[lvl]){
     var dw=W, dh=im.height*(W/im.width);
-    // Scroll from bottom to top, no looping — clamp at top
-    var raw=G.bgY*0.9;
-    var offset=Math.min(raw, dh); // never exceed image height
-    // Draw image: offset is how far from bottom we've scrolled
-    // At offset=720: shows pixels (dh-720)..dh (bottom of image)
-    // At offset=dh:  shows pixels 0..720 (top of image)
-    var y0=H-offset; // top-left y on canvas
-    X.drawImage(im,0,y0,dw,dh);
-    // If image doesn't fill canvas top, fill with solid color
-    if(y0>0){
-      var fb=['#6b6455','#585048','#504840','#6a5e48','#524a40','#4a4038',
-              '#5a4838','#483c34','#3c3028'];
-      X.fillStyle=fb[Math.min(lvl,8)];X.fillRect(0,0,dw,y0);
-    }
+    // Clamp scroll — same direction as original but no modulo (no seam)
+    var offset=Math.min(G.bgY*0.9, dh);
+    X.drawImage(im,0,offset-dh,dw,dh);
   } else {
     var fb=['#6b6455','#585048','#504840','#6a5e48','#524a40','#4a4038',
             '#5a4838','#483c34','#3c3028'];
